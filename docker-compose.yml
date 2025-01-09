@@ -53,7 +53,7 @@ services:
     expose:
       - 3000
     ports:
-      - 4000:3000
+      - 2000:3000
     networks:
       - promillezone_network
     restart: unless-stopped
