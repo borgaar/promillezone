@@ -124,10 +124,25 @@ export const protectedProcedure = t.procedure
     if (!ctx.session || !ctx.session.user) {
       throw new TRPCError({ code: "UNAUTHORIZED" });
     }
+
+    if (!ctx.session.user.collectiveId) {
+      throw new TRPCError({
+        code: "PRECONDITION_FAILED",
+        message: "User does not belong to a collective!",
+      });
+    }
+
     return next({
       ctx: {
         // infers the `session` as non-nullable
-        session: { ...ctx.session, user: ctx.session.user },
+        session: {
+          ...ctx.session,
+          user: {
+            ...ctx.session.user,
+            // infer collectiveId as non-nullable
+            collectiveId: ctx.session.user.collectiveId,
+          },
+        },
       },
     });
   });

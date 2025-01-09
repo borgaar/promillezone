@@ -1,6 +1,3 @@
-"use client";
-
-import { useState } from "react";
 import {
   Card,
   CardContent,
@@ -8,15 +5,10 @@ import {
   CardHeader,
   CardTitle,
 } from "../../ui/card";
-import PersonCard from "../members/person-card";
-import { Input } from "../../ui/input";
-import { Button } from "../../ui/button";
-import TrashSetup from "./setup";
 import { Trash } from "lucide-react";
+import { TrashSetup } from "./setup";
 
 export default function TrashTile() {
-  const [addressId, setAddressId] = useState<string | null>(null);
-
   return (
     <Card className="relative lg:row-span-2">
       <CardHeader>

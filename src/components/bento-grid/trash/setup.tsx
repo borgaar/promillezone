@@ -1,74 +1,104 @@
-import { useState } from "react";
-import { Button } from "../../ui/button";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "../../ui/card";
+"use client";
+
 import { Input } from "../../ui/input";
 
-export interface Address {
-  id: string;
-  adresse: string;
-}
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
-export default function TrashSetup() {
-  const [address, setAddress] = useState("");
-  const [step, setStep] = useState(0);
+import { toast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { api } from "../../../trpc/react";
+import { useRouter } from "next/navigation";
+import { Card, CardContent, CardHeader, CardTitle } from "../../ui/card";
+import { TRPCError } from "@trpc/server";
+import { TRPCClientError } from "@trpc/client";
 
-  const submitAddress = async () => {
-    // TODO use backend endpoint
-    // const response = await fetch(
-    //   `https://trv.no/wp-json/wasteplan/v2/adress/?s=${address}`,
-    // );
+const FormSchema = z.object({
+  provider: z.string(),
+  address: z.string(),
+});
 
-    // if (response.status === 200) {
-    //   const data = (await response.json()) as Address[];
+export function TrashSetup() {
+  const form = useForm<z.infer<typeof FormSchema>>({
+    resolver: zodResolver(FormSchema),
+    defaultValues: {
+      address: "",
+      provider: "trv",
+    },
+  });
 
-    //   console.log(data);
-    // } else {
-    //   console.error("Failed to fetch address", response);
-    // }
+  const { mutateAsync: setupProvider } = api.trash.setupProvider.useMutation();
 
-    setTimeout(() => {
-      setStep((s) => s + 1);
-    }, 300);
-  };
+  const router = useRouter();
 
-  const Step = () => {
-    if (step === 0) {
-      return (
-        <div className="flex w-full max-w-sm items-center space-x-2">
-          <Input
-            type="email"
-            placeholder="Din addresse"
-            onChange={(e) => setAddress(e.target.value)}
-            value={address}
-          />
-          <Button onClick={submitAddress}>Søk</Button>
-        </div>
-      );
+  const onSubmit = async (data: z.infer<typeof FormSchema>) => {
+    try {
+      await setupProvider({
+        address: data.address,
+        providerSlug: data.provider,
+      });
+    } catch (error) {
+      if (error instanceof TRPCClientError) {
+        toast({
+          title: "Oops, noe gikk galt!",
+          description: error.message,
+        });
+      }
+
+      return;
     }
+
+    toast({
+      title: "Søppelkalenderen din er nå satt opp!",
+    });
+
+    router.refresh();
   };
 
   return (
-    <Card className="w-full">
+    <Card>
       <CardHeader>
-        <CardTitle>Kom i gang</CardTitle>
-        <CardDescription>
-          Skriv inn addressen til kollektivet ditt nedenfor for å hente
-          tømmeplanen din. Tømmeplanen er levert av{" "}
-          <a href="https://trv.no/" className="underline" target="_blank">
-            Trondheim Renholdsverk
-          </a>
-          .
-        </CardDescription>
+        <CardHeader>
+          <CardTitle>Kom i gang med tømmeplan!</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="w-full space-y-6"
+            >
+              <FormField
+                control={form.control}
+                name="address"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Adresse</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Adresseveien 1" {...field} />
+                    </FormControl>
+                    <FormDescription>
+                      Vi trenger adressen din for å kunne gi deg riktig
+                      søppelkalender
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button type="submit">Send</Button>
+            </form>
+          </Form>
+        </CardContent>
       </CardHeader>
-      <CardContent>
-        <Step />
-      </CardContent>
     </Card>
   );
 }
