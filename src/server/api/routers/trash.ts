@@ -35,7 +35,13 @@ export const trashRouter = createTRPCRouter({
       });
     }
 
-    return provider.getTrashSchedule(trashAddressId);
+    const schedule = await provider.getTrashSchedule(trashAddressId);
+
+    schedule.sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+    );
+
+    return schedule;
   }),
 
   setupProvider: protectedProcedure
