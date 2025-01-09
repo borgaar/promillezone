@@ -2,18 +2,28 @@
 
 import * as React from "react";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import PersonCard from "./person-card";
 import { AddMemberDialogButton } from "./add-dialog";
+import { Users } from "lucide-react";
 
 export function MembersTile() {
   return (
     <Card className="relative max-lg:row-start-1">
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
-          <span>Medlemmer</span>
+          <span className="flex gap-2">
+            <Users strokeWidth={2.5} /> Medlemmer
+          </span>
           <AddMemberDialogButton />
         </CardTitle>
+        <CardDescription>Se hvem som er med i kollektivet</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col items-start justify-start gap-2">
         <PersonCard
