@@ -1,0 +1,68 @@
+services:
+  web-app:
+    container_name: promillezone-web-app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - AUTH_SECRET=${AUTH_SECRET}
+      - NEXTAUTH_URL=${NEXTAUTH_URL}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      # separate db url due to docker networking (host=database)
+      - DATABASE_URL=postgresql://postgres:password@promillezone_database:5432/promillezone
+    depends_on:
+      - database
+    expose:
+      - 3000
+    ports:
+      - 3000:3000
+    networks:
+      - promillezone_network
+    profiles:
+      - dev
+
+  database:
+    container_name: promillezone_database
+    image: postgres:latest
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=promillezone
+    expose:
+      - 5432
+    ports:
+      - 5432:5432
+    volumes:
+      - promillezone_data:/var/lib/postgresql/data
+    networks:
+      - promillezone_network
+    profiles:
+      - dev
+
+  promillezone-prod:
+    container_name: promillezone-web-app
+    image: ghcr.io/borgaar/promillezone:latest
+    environment:
+      - AUTH_SECRET=${AUTH_SECRET}
+      - NEXTAUTH_URL=${NEXTAUTH_URL}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - DATABASE_URL=${DATABASE_URL}
+    command: sh -c 'prisma migrate deploy && node server.js'
+    expose:
+      - 3000
+    ports:
+      - 4000:3000
+    networks:
+      - promillezone_network
+    restart: unless-stopped
+    profiles:
+      - production
+
+networks:
+  promillezone_network:
+    driver: bridge
+volumes:
+  promillezone_data:
+    driver: local

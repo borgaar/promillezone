@@ -1,0 +1,14 @@
+.github
+.next
+node_modules
+.dockerignore
+.env
+.env.example
+.eslintrc.cjs
+.gitignore
+.docker-compose.yml
+Dockerfile
+Makefile
+next-env.d.ts
+prettier.config.js
+README.md

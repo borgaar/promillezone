@@ -1,0 +1,93 @@
+name: Publish image and deploy
+
+on:
+  push:
+    branches: ["master"]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-push-image:
+    name: Build and push Docker image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Read version from package.json
+        id: version
+        run: |
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+          echo "version=$PACKAGE_VERSION" >> $GITHUB_OUTPUT
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=${{ steps.version.outputs.version }}
+            type=raw,value=latest
+      - name: Build and push Docker image
+        id: push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+      - name: Generate artifact attestation
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    needs: build-and-push-image
+    concurrency:
+      group: deployment_lock
+      cancel-in-progress: false
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.KEY }}" > ~/.ssh/key
+          chmod 600 ~/.ssh/key
+          ssh-keyscan ${{ secrets.HOST }} >> ~/.ssh/known_hosts
+
+      - name: Create .env file
+        run: |
+          echo 'DATABASE_URL="${{ secrets.DATABASE_URL }}"' >> .env
+          echo 'AUTH_SECRET="${{ secrets.AUTH_SECRET }}"' >> .env
+          echo 'NEXTAUTH_URL="${{ secrets.NEXTAUTH_URL }}"' >> .env
+          echo 'GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}"' >> .env
+          echo 'GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}"' >> .env
+          echo 'AUTH_TRUST_HOST="${{ secrets.AUTH_TRUST_HOST }}"' >> .env
+
+      - name: Copy docker-compose.yml, Makefile, and .env to VPS
+        run: |
+          scp -v -i ~/.ssh/key docker-compose.yml Makefile .env ${{ secrets.USERNAME }}@${{ secrets.HOST }}:${{ secrets.PATH }}
+
+      - name: Deploy to VPS
+        run: |
+          ssh -v -i ~/.ssh/key ${{ secrets.USERNAME }}@${{ secrets.HOST }} << 'ENDSSH'
+          cd ${{ secrets.PATH }}
+          chmod 0600 .env || rm .env
+          make prod
+          ENDSSH
