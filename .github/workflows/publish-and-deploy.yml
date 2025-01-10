@@ -78,7 +78,6 @@ jobs:
           echo 'NEXTAUTH_URL="${{ secrets.NEXTAUTH_URL }}"' >> .env
           echo 'GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}"' >> .env
           echo 'GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}"' >> .env
-          echo 'AUTH_TRUST_HOST="${{ secrets.AUTH_TRUST_HOST }}"' >> .env
 
       - name: Copy docker-compose.yml, Makefile, and .env to VPS
         run: |
