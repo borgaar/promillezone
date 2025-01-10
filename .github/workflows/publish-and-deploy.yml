@@ -82,7 +82,7 @@ jobs:
 
       - name: Copy docker-compose.yml, Makefile, and .env to VPS
         run: |
-          scp -v -i ~/.ssh/key docker-compose.yml Makefile .env ${{ secrets.USERNAME }}@${{ secrets.HOST }}:${{ secrets.PATH }}
+          scp -v -i ~/.ssh/key -oKexAlgorithms=+diffie-hellman-group14-sha1 docker-compose.yml Makefile .env ${{ secrets.USERNAME }}@${{ secrets.HOST }}:${{ secrets.PATH }}
 
       - name: Deploy to VPS
         run: |
