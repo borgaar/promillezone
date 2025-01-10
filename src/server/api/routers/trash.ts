@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import {
   createTRPCRouter,
-  protectedProcedure,
+  collectiveProcedure,
   publicProcedure,
 } from "@/server/api/trpc";
 import { TRPCError } from "@trpc/server";
@@ -11,7 +11,7 @@ import { TrashProviderFactory } from "../../trash/factory";
 export const trashRouter = createTRPCRouter({
   getProviders: publicProcedure.query(() => TrashProviderFactory.getAll()),
 
-  getSchedule: protectedProcedure.query(async ({ ctx }) => {
+  getSchedule: collectiveProcedure.query(async ({ ctx }) => {
     const {
       trashAddressId,
       trashProviderSlug,
@@ -53,7 +53,7 @@ export const trashRouter = createTRPCRouter({
     return schedule;
   }),
 
-  setupProvider: protectedProcedure
+  setupProvider: collectiveProcedure
     .input(z.object({ providerSlug: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const provider = TrashProviderFactory.get(input.providerSlug);

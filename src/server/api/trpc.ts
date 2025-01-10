@@ -125,6 +125,35 @@ export const protectedProcedure = t.procedure
       throw new TRPCError({ code: "UNAUTHORIZED" });
     }
 
+    return next({
+      ctx: {
+        // infers the `session` as non-nullable
+        session: {
+          ...ctx.session,
+          user: {
+            ...ctx.session.user,
+          },
+        },
+      },
+    });
+  });
+
+/**
+ * Collective procedure (authenticated and in a collective)
+ *
+ * If you want a query or mutation to ONLY be accessible to logged in users and is in collective,
+ * use this. It verifies the session is valid and guarantees `ctx.session.user` is not null and
+ * checks that !ctx.session.user.collectiveId is not null.
+ *
+ * @see https://trpc.io/docs/procedures
+ */
+export const collectiveProcedure = t.procedure
+  .use(timingMiddleware)
+  .use(({ ctx, next }) => {
+    if (!ctx.session || !ctx.session.user) {
+      throw new TRPCError({ code: "UNAUTHORIZED" });
+    }
+
     if (!ctx.session.user.collectiveId) {
       throw new TRPCError({
         code: "PRECONDITION_FAILED",

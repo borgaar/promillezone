@@ -1,9 +1,5 @@
 import { Input } from "@/components/ui/input";
-import {
-  createTRPCRouter,
-  protectedProcedure,
-  publicProcedure,
-} from "@/server/api/trpc";
+import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 import { z } from "zod";
 
 export const collectiveRoute = createTRPCRouter({
