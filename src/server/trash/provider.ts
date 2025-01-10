@@ -3,7 +3,7 @@
  */
 export interface Address {
   streetName: string;
-  houseNumber: number;
+  houseNumber: string;
   postalCode: string;
 }
 

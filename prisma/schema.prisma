@@ -58,7 +58,7 @@ model Collective {
     id                String  @id @default(uuid())
     name              String
     streetName        String
-    houseNumber       Int
+    houseNumber       String
     postalCode        String
     trashAddressId    String?
     trashProviderSlug String?
