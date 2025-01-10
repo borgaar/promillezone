@@ -1,51 +1,47 @@
 "use client";
 
-import { Input } from "../../ui/input";
-
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import Image from "next/image";
 
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { api } from "../../../trpc/react";
 import { useRouter } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "../../ui/card";
-import { TRPCError } from "@trpc/server";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../../ui/card";
 import { TRPCClientError } from "@trpc/client";
+import { Radio, RadioGroup } from "@headlessui/react";
+import { CheckCircleIcon } from "lucide-react";
 
 const FormSchema = z.object({
-  provider: z.string(),
-  address: z.string(),
+  providerSlug: z.string(),
 });
 
 export function TrashSetup() {
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
-    defaultValues: {
-      address: "",
-      provider: "trv",
-    },
   });
 
   const { mutateAsync: setupProvider } = api.trash.setupProvider.useMutation();
 
+  const { data: providers } = api.trash.getProviders.useQuery();
+
   const router = useRouter();
+
+  console.log(JSON.stringify(providers, null, 2));
 
   const onSubmit = async (data: z.infer<typeof FormSchema>) => {
     try {
       await setupProvider({
-        address: data.address,
-        providerSlug: data.provider,
+        providerSlug: data.providerSlug,
       });
     } catch (error) {
       if (error instanceof TRPCClientError) {
@@ -70,6 +66,7 @@ export function TrashSetup() {
       <CardHeader>
         <CardHeader>
           <CardTitle>Kom i gang med tømmeplan!</CardTitle>
+          <CardDescription>Velg tømmeleverandøren din</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -79,18 +76,47 @@ export function TrashSetup() {
             >
               <FormField
                 control={form.control}
-                name="address"
+                name="providerSlug"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Adresse</FormLabel>
                     <FormControl>
-                      <Input placeholder="Adresseveien 1" {...field} />
+                      <RadioGroup
+                        className="mt-6 flex gap-y-6 sm:gap-x-4"
+                        onChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        {providers?.map((provider) => (
+                          <Radio
+                            key={provider.slug}
+                            value={provider.slug}
+                            aria-label={provider.name}
+                            className="group relative flex cursor-pointer rounded-lg border border-gray-300 bg-white p-4 shadow-sm focus:outline-none data-[focus]:border-neutral-600 data-[focus]:ring-2 data-[focus]:ring-neutral-600"
+                          >
+                            <span className="flex flex-1 items-center gap-2">
+                              {provider.logoUrl && (
+                                <Image
+                                  src={provider.logoUrl}
+                                  alt="logo"
+                                  width={30}
+                                  height={30}
+                                />
+                              )}
+                              <span className="block text-sm font-medium text-gray-900">
+                                {provider.name}
+                              </span>
+                            </span>
+                            <CheckCircleIcon
+                              aria-hidden="true"
+                              className="size-5 text-neutral-600 group-[&:not([data-checked])]:invisible"
+                            />
+                            <span
+                              aria-hidden="true"
+                              className="pointer-events-none absolute -inset-px rounded-lg border-2 border-transparent group-data-[focus]:border group-data-[checked]:border-neutral-600"
+                            />
+                          </Radio>
+                        ))}
+                      </RadioGroup>
                     </FormControl>
-                    <FormDescription>
-                      Vi trenger adressen din for å kunne gi deg riktig
-                      søppelkalender
-                    </FormDescription>
-                    <FormMessage />
                   </FormItem>
                 )}
               />

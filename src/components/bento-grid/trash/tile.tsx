@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "../../ui/card";
 import { Banana, Milk, Newspaper, Trash, Trash2, Wine } from "lucide-react";
 import { TrashSetup } from "./setup";
 import { api } from "../../../trpc/server";
-import { TRPCClientError } from "@trpc/client";
 import type {
   TrashCategory,
   TrashScheduleEntry,
@@ -43,10 +42,11 @@ async function TrashTileContent() {
 
     return <TrashSchedule schedule={schedule} />;
   } catch (error) {
-    if (error instanceof TRPCClientError) {
+    if (error?.code === "PRECONDITION_FAILED") {
       return <TrashSetup />;
     }
-    throw error;
+
+    return <div>Noe gikk galt under innlastingen</div>;
   }
 }
 

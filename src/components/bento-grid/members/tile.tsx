@@ -23,7 +23,6 @@ export function MembersTile() {
           </span>
           <AddMemberDialogButton />
         </CardTitle>
-        <CardDescription>Se hvem som er med i kollektivet</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col items-start justify-start gap-2">
         <PersonCard

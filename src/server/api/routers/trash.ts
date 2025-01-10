@@ -12,12 +12,17 @@ export const trashRouter = createTRPCRouter({
   getProviders: publicProcedure.query(() => TrashProviderFactory.getAll()),
 
   getSchedule: protectedProcedure.query(async ({ ctx }) => {
-    const { trashAddressId, trashProviderSlug } =
-      await ctx.db.collective.findUniqueOrThrow({
-        where: {
-          id: ctx.session.user.collectiveId,
-        },
-      });
+    const {
+      trashAddressId,
+      trashProviderSlug,
+      houseNumber,
+      postalCode,
+      streetName,
+    } = await ctx.db.collective.findUniqueOrThrow({
+      where: {
+        id: ctx.session.user.collectiveId,
+      },
+    });
 
     if (!trashAddressId || !trashProviderSlug) {
       throw new TRPCError({
@@ -35,7 +40,11 @@ export const trashRouter = createTRPCRouter({
       });
     }
 
-    const schedule = await provider.getTrashSchedule(trashAddressId);
+    const schedule = await provider.getTrashSchedule(trashAddressId, {
+      houseNumber,
+      postalCode,
+      streetName,
+    });
 
     schedule.sort(
       (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
@@ -45,12 +54,7 @@ export const trashRouter = createTRPCRouter({
   }),
 
   setupProvider: protectedProcedure
-    .input(
-      z.object({
-        providerSlug: z.string(),
-        address: z.string(),
-      }),
-    )
+    .input(z.object({ providerSlug: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const provider = TrashProviderFactory.get(input.providerSlug);
 
@@ -63,7 +67,18 @@ export const trashRouter = createTRPCRouter({
         });
       }
 
-      const addressId = await provider.getAddressId(input.address);
+      const address = await ctx.db.collective.findUniqueOrThrow({
+        where: {
+          id: ctx.session.user.collectiveId,
+        },
+        select: {
+          postalCode: true,
+          houseNumber: true,
+          streetName: true,
+        },
+      });
+
+      const addressId = await provider.getAddressId(address);
 
       // TODO save addressId and provider slug to database
       await ctx.db.collective.update({

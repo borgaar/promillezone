@@ -1,4 +1,6 @@
+import { env } from "../../env";
 import type { TrashProvider } from "./provider";
+import ROAF from "./provider/roaf";
 import TRV from "./provider/trv";
 
 class TrashProviderFactory {
@@ -19,11 +21,15 @@ class TrashProviderFactory {
   }
 
   static getAll(): TrashProvider[] {
-    return Object.values(TrashProviderFactory.providers);
+    return Object.values(TrashProviderFactory.providers).map((p) => ({
+      ...p,
+      logoUrl: p.logoUrl ? env.NEXTAUTH_URL + p.logoUrl : undefined,
+    }));
   }
 }
 
 // REGISTER ALL PROVIDERS HERE
 TrashProviderFactory.register(new TRV());
+// TrashProviderFactory.register(new ROAF());
 
 export { TrashProviderFactory };

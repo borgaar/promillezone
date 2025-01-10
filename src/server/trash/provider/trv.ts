@@ -1,10 +1,11 @@
 import type {
+  Address,
   TrashCategory,
   TrashProvider,
   TrashScheduleEntry,
 } from "../provider";
 
-interface Address {
+interface TRVAddress {
   id: string;
   adresse: string;
 }
@@ -48,18 +49,20 @@ const fraksjonMap: Record<string, TrashCategory> = {
 export default class TRV implements TrashProvider {
   slug = "trv";
   name = "Trondheim Renholdsverk";
-  logoUrl?: "/trash-provider/trv.png";
+  logoUrl = "/trash-provider/trv.png";
 
-  async getAddressId(address: string): Promise<string> {
+  async getAddressId(address: Address): Promise<string> {
+    const interpolated = `${address.streetName} ${address.houseNumber}`;
+
     const response = await fetch(
-      `https://trv.no/wp-json/wasteplan/v2/adress/?s=${address}`,
+      `https://trv.no/wp-json/wasteplan/v2/adress/?s=${interpolated}`,
     );
 
     if (response.status !== 200) {
       throw new Error("Failed to fetch address");
     }
 
-    const data = (await response.json()) as Address[];
+    const data = (await response.json()) as TRVAddress[];
 
     if (data.length === 0) {
       throw new Error("Address not found");
@@ -68,7 +71,10 @@ export default class TRV implements TrashProvider {
     return data[0]!.id;
   }
 
-  async getTrashSchedule(addressId: string): Promise<TrashScheduleEntry[]> {
+  async getTrashSchedule(
+    addressId: string,
+    address: Address,
+  ): Promise<TrashScheduleEntry[]> {
     const response = await fetch(
       `https://trv.no/wp-json/wasteplan/v2/calendar/${addressId}`,
     );

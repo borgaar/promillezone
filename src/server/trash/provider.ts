@@ -1,4 +1,13 @@
 /**
+ * A single household address
+ */
+export interface Address {
+  streetName: string;
+  houseNumber: number;
+  postalCode: string;
+}
+
+/**
  * Represents a provider of trash schedule information
  */
 export interface TrashProvider {
@@ -19,15 +28,19 @@ export interface TrashProvider {
 
   /**
    * Get the provider's internal ID for a specific address
-   * @param address The address to get the ID for
+   
    */
-  getAddressId(address: string): Promise<string>;
+  getAddressId(address: Address): Promise<string>;
 
   /**
    * Get the upcoming trash schedule for a specific address
    * @param addressId The internal ID of the address to search for
+   * @param address The address to search for
    */
-  getTrashSchedule(addressId: string): Promise<TrashScheduleEntry[]>;
+  getTrashSchedule(
+    addressId: string,
+    address: Address,
+  ): Promise<TrashScheduleEntry[]>;
 }
 
 /**
