@@ -1,5 +1,8 @@
-import { Input } from "@/components/ui/input";
-import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
+import {
+  collectiveProcedure,
+  createTRPCRouter,
+  protectedProcedure,
+} from "@/server/api/trpc";
 import { z } from "zod";
 
 export const collectiveRoute = createTRPCRouter({
@@ -17,8 +20,8 @@ export const collectiveRoute = createTRPCRouter({
         ctx,
         input: { collectiveName, streetName, postalCode, houseNumber },
       }) => {
-        await ctx.db.$transaction(async (_) => {
-          const collective = await ctx.db.collective.create({
+        await ctx.db.$transaction(async (tx) => {
+          const collective = await tx.collective.create({
             data: {
               name: collectiveName,
               postalCode: postalCode,
@@ -26,7 +29,7 @@ export const collectiveRoute = createTRPCRouter({
               streetName: streetName,
             },
           });
-          await ctx.db.user.update({
+          await tx.user.update({
             data: {
               collectiveId: collective.id,
             },
@@ -35,4 +38,46 @@ export const collectiveRoute = createTRPCRouter({
         });
       },
     ),
+  createJoinToken: collectiveProcedure
+    .input(z.string())
+    .mutation(async ({ ctx, input: collectiveId }) => {
+      let joinToken = await ctx.db.joinCollectiveToken.create({
+        data: {
+          collectiveId: collectiveId,
+          createdBy: ctx.session.user.id,
+        },
+      });
+
+      return joinToken.token;
+    }),
+  joinCollective: protectedProcedure
+    .input(z.string())
+    .mutation(async ({ ctx, input: token }) => {
+      ctx.db.$transaction(async (tx) => {
+        const result = await tx.joinCollectiveToken.findUnique({
+          select: { collectiveId: true },
+          where: {
+            token: token,
+            AND: {
+              expiration: {
+                gt: new Date(),
+              },
+            },
+          },
+        });
+
+        if (!result) {
+          throw new Error("Invalid token");
+        }
+
+        await tx.user.update({
+          data: {
+            collectiveId: result.collectiveId,
+          },
+          where: {
+            id: ctx.session.user.id,
+          },
+        });
+      });
+    }),
 });

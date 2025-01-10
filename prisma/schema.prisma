@@ -43,26 +43,37 @@ model Session {
 }
 
 model User {
-    id            String      @id @default(cuid())
-    name          String?
-    email         String?     @unique
-    emailVerified DateTime?
-    image         String?
-    accounts      Account[]
-    sessions      Session[]
-    collective    Collective? @relation(fields: [collectiveId], references: [id])
-    collectiveId  String?
+    id                  String                @id @default(cuid())
+    name                String?
+    email               String?               @unique
+    emailVerified       DateTime?
+    image               String?
+    accounts            Account[]
+    sessions            Session[]
+    collective          Collective?           @relation(fields: [collectiveId], references: [id])
+    collectiveId        String?
+    JoinCollectiveToken JoinCollectiveToken[]
 }
 
 model Collective {
-    id                String  @id @default(uuid())
-    name              String
-    streetName        String
-    houseNumber       String
-    postalCode        String
-    trashAddressId    String?
-    trashProviderSlug String?
-    users             User[]
+    id                  String                @id @default(uuid())
+    name                String
+    streetName          String
+    houseNumber         String
+    postalCode          String
+    trashAddressId      String?
+    trashProviderSlug   String?
+    users               User[]
+    JoinCollectiveToken JoinCollectiveToken[]
+}
+
+model JoinCollectiveToken {
+    token        String     @id @default(uuid())
+    expiration   DateTime   @default(dbgenerated("CURRENT_TIMESTAMP + INTERVAL '24 hours'"))
+    user         User       @relation(fields: [createdBy], references: [id])
+    createdBy    String
+    collectiveId String
+    collective   Collective @relation(fields: [collectiveId], references: [id])
 }
 
 model VerificationToken {
