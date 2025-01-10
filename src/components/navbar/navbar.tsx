@@ -36,6 +36,7 @@ export default async function Navbar() {
             </button>
 
             {/* Profile dropdown */}
+            {/* @ts-expect-error type is correct */}
             <NavbarMenu session={session} />
           </div>
           <div className="-mr-2 flex items-center sm:hidden">

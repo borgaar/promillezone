@@ -17,7 +17,7 @@ import {
   isWithinInterval,
 } from "date-fns";
 import { nb } from "date-fns/locale";
-import { useMemo } from "react";
+import { Suspense, useMemo } from "react";
 
 export default async function TrashTile() {
   return (
@@ -30,7 +30,9 @@ export default async function TrashTile() {
         </CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col items-start justify-start gap-2">
-        <TrashTileContent />
+        <Suspense>
+          <TrashTileContent />
+        </Suspense>
       </CardContent>
     </Card>
   );
@@ -42,6 +44,7 @@ async function TrashTileContent() {
 
     return <TrashSchedule schedule={schedule} />;
   } catch (error) {
+    // @ts-expect-error tRPC error handling
     if (error?.code === "PRECONDITION_FAILED") {
       return <TrashSetup />;
     }

@@ -80,7 +80,6 @@ export const trashRouter = createTRPCRouter({
 
       const addressId = await provider.getAddressId(address);
 
-      // TODO save addressId and provider slug to database
       await ctx.db.collective.update({
         where: {
           id: ctx.session.user.collectiveId,
