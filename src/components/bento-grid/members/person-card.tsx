@@ -26,7 +26,7 @@ export default function PersonCard({
   onMakeAdmin,
 }: PersonCardProps) {
   return (
-    <div className="flex w-full items-center space-x-4 rounded-lg border bg-white p-4 shadow-sm">
+    <div className="flex w-full items-center space-x-4 rounded-lg border bg-white p-4 shadow-sm dark:bg-neutral-900">
       {/* Profile Picture */}
       <Avatar>
         {profilePictureUrl ? (
@@ -41,8 +41,12 @@ export default function PersonCard({
 
       {/* Name and Permission */}
       <div className="flex-1">
-        <p className="text-sm font-medium text-gray-900">{name}</p>
-        <p className="text-xs text-gray-500">{permission}</p>
+        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+          {name}
+        </p>
+        <p className="text-xs text-gray-500 dark:text-neutral-300">
+          {permission}
+        </p>
       </div>
 
       {/* Menu Button */}

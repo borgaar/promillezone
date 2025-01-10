@@ -5,35 +5,34 @@ import {
   DisclosureButton,
   DisclosurePanel,
 } from "@headlessui/react";
-import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { auth } from "../../server/auth";
 import NavbarMenu from "./menu";
+import { ModeToggle } from "../theme/mode-toggle";
+import Logo from "../logo";
 
 export default async function Navbar() {
   const session = await auth();
 
   return (
-    <Disclosure as="nav" className="bg-white shadow">
+    <Disclosure as="nav" className="bg-white shadow dark:bg-neutral-900">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 justify-between">
           <div className="flex">
             <div className="flex shrink-0 items-center">
+              <Logo className="fill-black dark:fill-white" />
               <img
-                alt="Your Company"
-                src="https://tailwindui.com/plus/img/logos/mark.svg?color=neutral&shade=600"
-                className="h-8 w-auto"
+                alt="Logo"
+                src="/logo.svg"
+                className="h-8 w-auto text-white"
+                style={{
+                  fill: "black",
+                }}
               />
             </div>
           </div>
           <div className="hidden sm:ml-6 sm:flex sm:items-center">
-            <button
-              type="button"
-              className="relative rounded-full bg-white p-1 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-neutral-500 focus:ring-offset-2"
-            >
-              <span className="absolute -inset-1.5" />
-              <span className="sr-only">View notifications</span>
-              <BellIcon aria-hidden="true" className="size-6" />
-            </button>
+            <ModeToggle />
 
             {/* Profile dropdown */}
             {/* @ts-expect-error type is correct */}
@@ -106,14 +105,7 @@ export default async function Navbar() {
                 tom@example.com
               </div>
             </div>
-            <button
-              type="button"
-              className="relative ml-auto shrink-0 rounded-full bg-white p-1 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-neutral-500 focus:ring-offset-2"
-            >
-              <span className="absolute -inset-1.5" />
-              <span className="sr-only">View notifications</span>
-              <BellIcon aria-hidden="true" className="size-6" />
-            </button>
+            <ModeToggle />
           </div>
           <div className="mt-3 space-y-1">
             <DisclosureButton

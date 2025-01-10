@@ -36,8 +36,6 @@ export function TrashSetup() {
 
   const router = useRouter();
 
-  console.log(JSON.stringify(providers, null, 2));
-
   const onSubmit = async (data: z.infer<typeof FormSchema>) => {
     try {
       await setupProvider({

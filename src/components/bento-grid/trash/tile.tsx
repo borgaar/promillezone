@@ -110,16 +110,19 @@ const formatDate = (date: Date) => {
 
 function TrashScheduleEntryTile({ entry }: { entry: TrashScheduleEntry }) {
   return (
-    <div className="flex w-full items-center justify-between space-x-4 rounded-lg border bg-white p-4 shadow-sm">
+    <div className="flex w-full items-center justify-between space-x-4 rounded-lg border bg-white p-4 shadow-sm dark:bg-neutral-900">
       <div className="flex items-center gap-2">
         <Avatar>{trashCategoryToIcon[entry.type]}</Avatar>
-        <p className="text-sm font-medium text-gray-900">
+        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
           {TrashCategoryToLabel[entry.type]}
         </p>
       </div>
       <p className="">
         {formatRelativeDate(entry.date)}
-        <span className="text-gray-500"> ⋅ {formatDate(entry.date)}</span>
+        <span className="text-gray-500 dark:text-neutral-400">
+          {" "}
+          ⋅ {formatDate(entry.date)}
+        </span>
       </p>
     </div>
   );
