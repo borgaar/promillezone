@@ -2,7 +2,7 @@ name: Publish image and deploy
 
 on:
   push:
-    branches: ["master"]
+    branches: ["PRODUCTION"]
 
 env:
   REGISTRY: ghcr.io
