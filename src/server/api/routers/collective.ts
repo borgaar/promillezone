@@ -48,6 +48,22 @@ export const collectiveRoute = createTRPCRouter({
         },
       });
 
+      // Do cleanup: delete all expired tokens
+      const cleanupExpiredTokens = async () => {
+        try {
+          await ctx.db.joinCollectiveToken.deleteMany({
+            where: {
+              expiresAt: {
+                lt: new Date(),
+              },
+            },
+          });
+        } catch (e) {
+          console.error(e);
+        }
+      };
+      cleanupExpiredTokens();
+
       return joinToken.token;
     }),
   joinCollective: protectedProcedure
@@ -59,7 +75,7 @@ export const collectiveRoute = createTRPCRouter({
           where: {
             token: token,
             AND: {
-              expiration: {
+              expiresAt: {
                 gt: new Date(),
               },
             },
