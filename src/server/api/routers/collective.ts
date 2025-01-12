@@ -5,7 +5,7 @@ import {
 } from "@/server/api/trpc";
 import { z } from "zod";
 
-export const collectiveRoute = createTRPCRouter({
+export const collectiveRouter = createTRPCRouter({
   getCollective: collectiveProcedure.query(async ({ ctx }) => {
     return await ctx.db.collective.findUnique({
       where: {
