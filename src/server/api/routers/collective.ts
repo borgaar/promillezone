@@ -44,7 +44,7 @@ const cleanupExpiredTokens = async (
 
 export const collectiveRouter = createTRPCRouter({
   getCollective: collectiveProcedure.query(async ({ ctx }) => {
-    return await ctx.db.collective.findUnique({
+    return await ctx.db.collective.findUniqueOrThrow({
       where: {
         id: ctx.session.user.collectiveId,
       },
