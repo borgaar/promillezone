@@ -3,8 +3,9 @@ import {
   createTRPCRouter,
   protectedProcedure,
 } from "@/server/api/trpc";
-import { PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "@prisma/client";
 import { z } from "zod";
+import { env } from "../../../env";
 
 const collectiveIdFromJoinToken = async (
   db: Pick<PrismaClient, "joinCollectiveToken">,
@@ -64,6 +65,7 @@ export const collectiveRouter = createTRPCRouter({
           id: result.collectiveId,
         },
         select: {
+          name: true,
           users: {
             select: {
               name: true,
@@ -126,31 +128,32 @@ export const collectiveRouter = createTRPCRouter({
         });
       },
     ),
-  createJoinToken: collectiveProcedure
-    .input(z.string())
-    .mutation(async ({ ctx }) => {
-      let joinToken = await ctx.db.joinCollectiveToken.create({
-        data: {
-          collectiveId: ctx.session.user.collectiveId,
-          createdBy: ctx.session.user.id,
-        },
-      });
+  createJoinToken: collectiveProcedure.mutation(async ({ ctx }) => {
+    const joinToken = await ctx.db.joinCollectiveToken.create({
+      data: {
+        collectiveId: ctx.session.user.collectiveId,
+        createdBy: ctx.session.user.id,
+      },
+    });
 
-      cleanupExpiredTokens(ctx.db);
+    void cleanupExpiredTokens(ctx.db);
 
-      return joinToken.token;
-    }),
+    return {
+      token: joinToken,
+      url: `${env.NEXTAUTH_URL}/invite?code=${joinToken.token}`,
+    };
+  }),
   joinCollective: protectedProcedure
     .input(z.string())
     .mutation(async ({ ctx, input: token }) => {
-      ctx.db.$transaction(async (tx) => {
+      await ctx.db.$transaction(async (tx) => {
         const result = await collectiveIdFromJoinToken(tx, token);
 
         if (!result) {
           throw new Error("Invalid token");
         }
 
-        cleanupExpiredTokens(ctx.db);
+        void cleanupExpiredTokens(ctx.db);
 
         await tx.user.update({
           data: {
