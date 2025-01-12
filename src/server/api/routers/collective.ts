@@ -6,13 +6,12 @@ import {
 import { PrismaClient } from "@prisma/client";
 import { z } from "zod";
 
+type DbClient = Pick<PrismaClient, "joinCollectiveToken">;
+
 const collectiveIdFromJoinToken = async (
-  db: Omit<
-    PrismaClient,
-    "$transaction" | "$on" | "$connect" | "$disconnect" | "$use" | "$extends"
-  >,
+  db: DbClient,
   token: string,
-) => {
+): Promise<{ collectiveId: string } | null> => {
   return await db.joinCollectiveToken.findUnique({
     where: {
       token: token,
