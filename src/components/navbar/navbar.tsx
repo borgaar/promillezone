@@ -15,25 +15,16 @@ export default async function Navbar() {
   const session = await auth();
 
   return (
-    <Disclosure as="nav" className="bg-white shadow dark:bg-neutral-900">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 justify-between">
-          <div className="flex">
+    <Disclosure as="nav" className="w-full bg-white shadow dark:bg-neutral-900">
+      <div className="mx-auto w-full px-2 sm:px-3 lg:px-4">
+        <div className="flex h-16 w-full justify-between">
+          <div className="flex gap-2">
             <div className="flex shrink-0 items-center">
               <Logo className="fill-black dark:fill-white" />
-              <img
-                alt="Logo"
-                src="/logo.svg"
-                className="h-8 w-auto text-white"
-                style={{
-                  fill: "black",
-                }}
-              />
             </div>
           </div>
           <div className="hidden sm:ml-6 sm:flex sm:items-center">
             <ModeToggle />
-
             {/* Profile dropdown */}
             {/* @ts-expect-error type is correct */}
             <NavbarMenu session={session} />

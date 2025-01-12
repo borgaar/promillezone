@@ -2,7 +2,7 @@ import { auth } from "@/server/auth";
 import { HydrateClient } from "@/trpc/server";
 import { MembersTile } from "../components/bento-grid/members/tile";
 import TrashTile from "../components/bento-grid/trash/tile";
-import BussTile from "../components/bento-grid/buss/tile";
+import BusTile from "../components/bento-grid/bus/tile";
 
 export default async function Home() {
   const session = await auth();
@@ -10,10 +10,10 @@ export default async function Home() {
   return (
     <HydrateClient>
       <main>
-        <div className="mt-10 grid gap-4 sm:mt-16 lg:grid-cols-3 lg:grid-rows-2">
+        <div className="mx-auto grid w-full gap-4 px-2 sm:mt-4 sm:px-3 lg:grid-cols-3 lg:grid-rows-2 lg:px-4">
           <TrashTile />
           <MembersTile />
-          <BussTile />
+          <BusTile />
           <div className="relative lg:row-span-2">
             <div className="absolute inset-px rounded-lg bg-white max-lg:rounded-b-[2rem] lg:rounded-r-[2rem]"></div>
             <div className="relative flex h-full flex-col overflow-hidden rounded-[calc(theme(borderRadius.lg)+1px)] max-lg:rounded-b-[calc(2rem+1px)] lg:rounded-r-[calc(2rem+1px)]">

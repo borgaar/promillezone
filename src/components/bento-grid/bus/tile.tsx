@@ -1,9 +1,9 @@
-import { Bus, Edit } from "lucide-react";
+import { Bus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../../ui/card";
-import { Button } from "../../ui/button";
 import BusTimeTable from "./time-table";
+import { EditBusDialog } from "./edit-dialog";
 
-export default function BussTile() {
+export default function BusTile() {
   return (
     <Card className="relative max-lg:row-start-3 lg:col-start-2 lg:row-start-2">
       <CardHeader>
@@ -11,10 +11,7 @@ export default function BussTile() {
           <span className="flex gap-2">
             <Bus strokeWidth={2.5} /> Buss
           </span>
-          <Button variant="outline">
-            <Edit />
-            Endre
-          </Button>
+          <EditBusDialog />
         </CardTitle>
       </CardHeader>
       <CardContent>
