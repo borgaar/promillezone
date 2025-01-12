@@ -105,4 +105,3 @@ export const collectiveRoute = createTRPCRouter({
       });
     }),
 });
-MembersBy;
