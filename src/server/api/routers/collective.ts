@@ -6,6 +6,11 @@ import {
 import { z } from "zod";
 
 export const collectiveRoute = createTRPCRouter({
+  getCollectiveById: protectedProcedure
+    .input(z.string())
+    .query(async ({ ctx, input: id }) => {
+      return await ctx.db.collective.findUnique({ where: { id: id } });
+    }),
   createCollective: protectedProcedure
     .input(
       z.object({
