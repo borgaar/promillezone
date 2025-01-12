@@ -25,6 +25,22 @@ const collectiveIdFromJoinToken = async (
   });
 };
 
+const cleanupExpiredTokens = async (
+  db: Pick<PrismaClient, "joinCollectiveToken">,
+) => {
+  try {
+    await db.joinCollectiveToken.deleteMany({
+      where: {
+        expiresAt: {
+          lt: new Date(),
+        },
+      },
+    });
+  } catch (e) {
+    console.error(e);
+  }
+};
+
 export const collectiveRouter = createTRPCRouter({
   getCollective: collectiveProcedure.query(async ({ ctx }) => {
     return await ctx.db.collective.findUnique({
@@ -120,21 +136,7 @@ export const collectiveRouter = createTRPCRouter({
         },
       });
 
-      // Do cleanup: delete all expired tokens
-      const cleanupExpiredTokens = async () => {
-        try {
-          await ctx.db.joinCollectiveToken.deleteMany({
-            where: {
-              expiresAt: {
-                lt: new Date(),
-              },
-            },
-          });
-        } catch (e) {
-          console.error(e);
-        }
-      };
-      cleanupExpiredTokens();
+      cleanupExpiredTokens(ctx.db);
 
       return joinToken.token;
     }),
@@ -147,6 +149,8 @@ export const collectiveRouter = createTRPCRouter({
         if (!result) {
           throw new Error("Invalid token");
         }
+
+        cleanupExpiredTokens(ctx.db);
 
         await tx.user.update({
           data: {
