@@ -1,7 +1,7 @@
 "use client";
 
 import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
-import { signIn } from "next-auth/react";
+import { signIn, signOut } from "next-auth/react";
 import type { auth } from "../../server/auth";
 
 export default function NavbarMenu({
@@ -40,6 +40,7 @@ export default function NavbarMenu({
               <a
                 href="#"
                 className="block px-4 py-2 text-sm text-gray-700 data-[focus]:bg-gray-100 data-[focus]:outline-none"
+                onClick={() => signOut()}
               >
                 Logg ut
               </a>
