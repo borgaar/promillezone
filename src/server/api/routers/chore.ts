@@ -21,9 +21,9 @@ export const choreRouter = createTRPCRouter({
       if (to < from) {
         throw new Error(
           "Invalid date range: " +
-            from +
+            from.toISOString() +
             " -> " +
-            to +
+            to.toISOString() +
             ". 'to' date must be after 'from' date.",
         );
       }
