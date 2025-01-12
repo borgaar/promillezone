@@ -9,11 +9,21 @@ export const collectiveRoute = createTRPCRouter({
   collectiveMembersById: protectedProcedure
     .input(z.string())
     .query(async ({ ctx, input: id }) => {
-      await ctx.db.collective.findFirst({
+      await ctx.db.collective.findUnique({
         where: { id: id },
         select: { users: { select: { name: true, image: true } } },
       });
     }),
+  getCollective: collectiveProcedure.query(async ({ ctx }) => {
+    return await ctx.db.collective.findUnique({
+      where: {
+        id: ctx.session.user.collectiveId,
+      },
+      include: {
+        users: true,
+      },
+    });
+  }),
   createCollective: protectedProcedure
     .input(
       z.object({
