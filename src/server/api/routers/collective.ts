@@ -133,6 +133,7 @@ export const collectiveRouter = createTRPCRouter({
       data: {
         collectiveId: ctx.session.user.collectiveId,
         createdBy: ctx.session.user.id,
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
       },
     });
 

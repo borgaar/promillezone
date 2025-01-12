@@ -67,11 +67,12 @@ model Collective {
     users               User[]
     JoinCollectiveToken JoinCollectiveToken[]
     DueChore            Chore[]
+    ShoppingList        ShoppingList[]
 }
 
 model JoinCollectiveToken {
     token        String     @id @default(uuid())
-    expiresAt    DateTime   @default(dbgenerated("CURRENT_TIMESTAMP + INTERVAL '24 hours'"))
+    expiresAt    DateTime
     user         User       @relation(fields: [createdBy], references: [id])
     createdBy    String
     collectiveId String
@@ -88,13 +89,31 @@ model Chore {
 }
 
 model DueChore {
-    id          String    @id @default(uuid())
     chore       Chore     @relation(fields: [choreId], references: [id], onDelete: Cascade)
     choreId     String
     assignee    User      @relation(fields: [assigneeId], references: [id])
     assigneeId  String
     dueDate     DateTime
     completedAt DateTime?
+
+    @@id([dueDate, choreId])
+}
+
+model ShoppingList {
+    id               String             @id @default(uuid())
+    name             String
+    owner            String
+    collective       Collective         @relation(fields: [owner], references: [id])
+    ShoppingListItem ShoppingListItem[]
+}
+
+model ShoppingListItem {
+    shoppingListId String
+    shoppingList   ShoppingList @relation(fields: [shoppingListId], references: [id], onDelete: Cascade)
+    item           String
+    isBought       Boolean
+
+    @@id([shoppingListId, item])
 }
 
 model VerificationToken {

@@ -47,14 +47,22 @@ export const choreRouter = createTRPCRouter({
       });
     }),
   completeChore: collectiveProcedure
-    .input(z.string())
-    .mutation(async ({ ctx, input: dueChoreId }) => {
+    .input(
+      z.object({
+        choreId: z.string(),
+        dueDate: z.date(),
+      }),
+    )
+    .mutation(async ({ ctx, input: { choreId, dueDate } }) => {
       await ctx.db.dueChore.update({
         data: {
           completedAt: new Date(),
         },
         where: {
-          id: dueChoreId,
+          dueDate_choreId: {
+            choreId: choreId,
+            dueDate: dueDate,
+          },
         },
       });
     }),
