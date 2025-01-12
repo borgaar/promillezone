@@ -3,7 +3,30 @@ import {
   createTRPCRouter,
   protectedProcedure,
 } from "@/server/api/trpc";
+import { PrismaClient } from "@prisma/client";
 import { z } from "zod";
+
+const collectiveIdFromJoinToken = async (
+  db: Omit<
+    PrismaClient,
+    "$transaction" | "$on" | "$connect" | "$disconnect" | "$use" | "$extends"
+  >,
+  token: string,
+) => {
+  return await db.joinCollectiveToken.findUnique({
+    where: {
+      token: token,
+      AND: {
+        expiresAt: {
+          gt: new Date(Date.now()),
+        },
+      },
+    },
+    select: {
+      collectiveId: true,
+    },
+  });
+};
 
 export const collectiveRouter = createTRPCRouter({
   getCollective: collectiveProcedure.query(async ({ ctx }) => {
@@ -16,6 +39,27 @@ export const collectiveRouter = createTRPCRouter({
       },
     });
   }),
+  getCollectivePreview: protectedProcedure
+    .input(z.string())
+    .query(async ({ ctx, input: inviteToken }) => {
+      const result = await collectiveIdFromJoinToken(ctx.db, inviteToken);
+
+      if (!result) throw Error("Invalid token");
+
+      return await ctx.db.collective.findUnique({
+        where: {
+          id: result.collectiveId,
+        },
+        select: {
+          users: {
+            select: {
+              name: true,
+              image: true,
+            },
+          },
+        },
+      });
+    }),
   createCollective: protectedProcedure
     .input(
       z.object({
@@ -80,17 +124,7 @@ export const collectiveRouter = createTRPCRouter({
     .input(z.string())
     .mutation(async ({ ctx, input: token }) => {
       ctx.db.$transaction(async (tx) => {
-        const result = await tx.joinCollectiveToken.findUnique({
-          select: { collectiveId: true },
-          where: {
-            token: token,
-            AND: {
-              expiresAt: {
-                gt: new Date(),
-              },
-            },
-          },
-        });
+        const result = await collectiveIdFromJoinToken(tx, token);
 
         if (!result) {
           throw new Error("Invalid token");
