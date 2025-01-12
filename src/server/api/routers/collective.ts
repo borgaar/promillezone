@@ -6,12 +6,12 @@ import {
 import { z } from "zod";
 
 export const collectiveRoute = createTRPCRouter({
-  getMembersByCollectiveId: protectedProcedure
+  getCollectiveId: protectedProcedure
     .input(z.string())
     .query(async ({ ctx, input: id }) => {
-      return await ctx.db.collective.findUnique({
+      await ctx.db.collective.findFirst({
         where: { id: id },
-        select: { users: true },
+        select: { users: { select: { name: true, image: true } } },
       });
     }),
   createCollective: protectedProcedure
