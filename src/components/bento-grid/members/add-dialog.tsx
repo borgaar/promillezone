@@ -12,21 +12,31 @@ import {
 } from "@/components/ui/dialog";
 import { Check, Copy, Plus } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { api, type RouterOutputs } from "../../../trpc/react";
 
 export function AddMemberDialogButton() {
+  const { mutateAsync: createJoinToken } =
+    api.collective.createJoinToken.useMutation();
+
   const [isCopied, setIsCopied] = useState(false);
+  const [response, setResponse] = useState<
+    RouterOutputs["collective"]["createJoinToken"] | null
+  >(null);
+
+  useEffect(() => {
+    void createJoinToken().then(setResponse);
+  }, [createJoinToken]);
 
   const copyUrl = async () => {
+    if (!response) return;
     setIsCopied(true);
 
-    void navigator.clipboard.writeText("brotherman testern");
+    void navigator.clipboard.writeText(response.url);
     setTimeout(() => {
       setIsCopied(false);
     }, 1000);
   };
-
-  // TODO fetch url to invite member
 
   return (
     <Dialog>
@@ -40,19 +50,15 @@ export function AddMemberDialogButton() {
         <DialogHeader>
           <DialogTitle>Legg til et medlem</DialogTitle>
           <DialogDescription>
-            Send lenken nedenfor til den du ønsker å legge til. Lenken kan kun
-            brukes én gang.
+            Send lenken nedenfor til den du ønsker å legge til. Lenken går ut på
+            dato om 24 timer.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <Textarea
-            value={
-              "https://promille.zone/invite?code=9fn34uq20fi423opmjvfioq34pfnjiq40å3nvfji4qpofjmvio4apwqfnuq82340åmvrufi34q2opnurv23q4årnuviopøfjmeowpufå"
-            }
-            className="resize-none"
-            readOnly
-          />
-        </div>
+        {Boolean(response) && (
+          <div className="grid gap-4 py-4">
+            <Textarea value={response!.url} className="resize-none" readOnly />
+          </div>
+        )}
         <DialogFooter>
           <Button onClick={copyUrl} variant="outline" disabled={isCopied}>
             {isCopied ? (

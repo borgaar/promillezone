@@ -1,19 +1,14 @@
-"use client";
-
 import * as React from "react";
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import PersonCard from "./person-card";
 import { AddMemberDialogButton } from "./add-dialog";
 import { Users } from "lucide-react";
+import { api } from "../../../trpc/server";
 
-export function MembersTile() {
+export async function MembersTile() {
+  const collective = await api.collective.getCollective();
+
   return (
     <Card className="relative max-lg:row-start-1">
       <CardHeader>
@@ -25,24 +20,9 @@ export function MembersTile() {
         </CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col items-start justify-start gap-2">
-        <PersonCard
-          name={"Brotherman Testern"}
-          permission={"Admin"}
-          onRemove={() => ({})}
-          onMakeAdmin={() => ({})}
-        />
-        <PersonCard
-          name={"Borgar barland"}
-          permission={"Medlem"}
-          onRemove={() => ({})}
-          onMakeAdmin={() => ({})}
-        />
-        <PersonCard
-          name={"Anders Morille"}
-          permission={"Medlem"}
-          onRemove={() => ({})}
-          onMakeAdmin={() => ({})}
-        />
+        {collective.users.map((user) => (
+          <PersonCard user={user} key={user.id} />
+        ))}
       </CardContent>
     </Card>
   );
