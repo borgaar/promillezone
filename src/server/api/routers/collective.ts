@@ -60,6 +60,27 @@ export const collectiveRouter = createTRPCRouter({
         },
       });
     }),
+  removeMember: collectiveProcedure
+    .input(z.string())
+    .mutation(async ({ ctx, input: memberToRemove }) => {
+      await ctx.db.user.update({
+        data: {
+          collectiveId: null,
+        },
+        where: {
+          id: memberToRemove,
+          AND: {
+            collective: {
+              users: {
+                some: {
+                  id: ctx.session.user.id,
+                },
+              },
+            },
+          },
+        },
+      });
+    }),
   createCollective: protectedProcedure
     .input(
       z.object({
@@ -94,10 +115,10 @@ export const collectiveRouter = createTRPCRouter({
     ),
   createJoinToken: collectiveProcedure
     .input(z.string())
-    .mutation(async ({ ctx, input: collectiveId }) => {
+    .mutation(async ({ ctx }) => {
       let joinToken = await ctx.db.joinCollectiveToken.create({
         data: {
-          collectiveId: collectiveId,
+          collectiveId: ctx.session.user.collectiveId,
           createdBy: ctx.session.user.id,
         },
       });
