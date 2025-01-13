@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -16,53 +15,123 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { api } from "../trpc/react";
+import { useRouter } from "next/navigation";
 
 const FormSchema = z.object({
-  collectiveName: z.string().min(1, "Minst 1 bokstav").max(32),
-  streetName: z.string().min(1),
-  houseNumber: z.string().min(1),
-  postalCode: z.string().min(1),
+  collectiveName: z
+    .string()
+    .min(1, "Minst 1 bokstav")
+    .max(28, "For langt navn"),
+  streetName: z.string().min(1, "Må fylles ut"),
+  houseNumber: z
+    .string()
+    .min(1, "Må fylles ut")
+    .refine((value) => {
+      return !isNaN(Number(value));
+    }, "Må være et tall"),
+  postalCode: z
+    .string()
+    .length(4, "Må være 4 tegn")
+    .refine((value) => {
+      return !isNaN(Number(value));
+    }, "Må være et tall"),
 });
 
-export function InputForm() {
+export default function CreateCollectiveForm() {
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
-      username: "",
+      collectiveName: "",
+      streetName: "",
+      houseNumber: "",
+      postalCode: "",
     },
   });
 
-  function onSubmit(data: z.infer<typeof FormSchema>) {
-    toast({
-      title: "You submitted the following values:",
-      description: (
-        <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-          <code className="text-white">{JSON.stringify(data, null, 2)}</code>
-        </pre>
-      ),
-    });
+  const { mutateAsync: createCollective } =
+    api.collective.createCollective.useMutation();
+
+  const router = useRouter();
+
+  async function onSubmit(data: z.infer<typeof FormSchema>) {
+    await createCollective(data);
+    router.refresh();
   }
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="w-2/3 space-y-6">
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="w-full max-w-md space-y-6"
+      >
+        <div>
+          <div className="text-xl font-bold">
+            Opprett kollektivet ditt for å komme i gang
+          </div>
+          <div className="mt-1 text-lg font-normal text-neutral-600 dark:text-neutral-300">
+            eller be en venn om å invitere deg
+          </div>
+        </div>
         <FormField
           control={form.control}
-          name="username"
+          name="collectiveName"
           render={({ field }) => (
-            <FormItem>
-              <FormLabel>Username</FormLabel>
-              <FormControl>
-                <Input placeholder="shadcn" {...field} />
+            <FormItem className="w-full">
+              <FormLabel>Navn på kollektivet</FormLabel>
+              <FormControl className="w-full">
+                <Input {...field} className="w-full" />
               </FormControl>
-              <FormDescription>
-                This is your public display name.
-              </FormDescription>
+              <FormDescription>Dette velger du helt selv</FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
-        <Button type="submit">Submit</Button>
+        <FormField
+          control={form.control}
+          name="streetName"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Gatenavn</FormLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <div className="flex w-full justify-between space-x-4">
+          <FormField
+            control={form.control}
+            name="houseNumber"
+            render={({ field }) => (
+              <FormItem className="w-full">
+                <FormLabel>Husnummer</FormLabel>
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="postalCode"
+            render={({ field }) => (
+              <FormItem className="w-full">
+                <FormLabel>Postnummer</FormLabel>
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <Button type="submit" className="w-full">
+          Opprett kollektiv
+        </Button>
       </form>
     </Form>
   );

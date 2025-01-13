@@ -1,10 +1,9 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Edit } from "lucide-react";
 import { api, type RouterOutputs } from "../../../trpc/react";
 import { Checkbox } from "../../ui/checkbox";
 import { useEffect } from "react";
+import { EditItemDialog } from "./edit-item-dialog";
 
 export default function ShoppingListItem({
   item,
@@ -67,9 +66,7 @@ export default function ShoppingListItem({
         </p>
       </div>
 
-      <Button variant="outline" size="icon">
-        <Edit />
-      </Button>
+      <EditItemDialog item={item} />
     </div>
   );
 }

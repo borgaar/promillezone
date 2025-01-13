@@ -83,4 +83,12 @@ export const shoppingListRouter = createTRPCRouter({
         },
       });
     }),
+  removeCheckedItems: collectiveProcedure.mutation(async ({ ctx }) => {
+    await ctx.db.shoppingListItem.deleteMany({
+      where: {
+        collectiveId: ctx.session.user.collectiveId,
+        isBought: true,
+      },
+    });
+  }),
 });

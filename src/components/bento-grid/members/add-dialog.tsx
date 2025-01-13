@@ -60,7 +60,7 @@ export function AddMemberDialogButton() {
           </div>
         )}
         <DialogFooter>
-          <Button onClick={copyUrl} variant="outline" disabled={isCopied}>
+          <Button onClick={copyUrl} disabled={isCopied}>
             {isCopied ? (
               <>
                 <Check /> Kopiert!

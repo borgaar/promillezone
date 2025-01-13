@@ -4,6 +4,7 @@ import { MembersTile } from "../components/bento-grid/members/tile";
 import TrashTile from "../components/bento-grid/trash/tile";
 import BusTile from "../components/bento-grid/bus/tile";
 import ShoppingTile from "../components/bento-grid/shopping/tile";
+import CreateCollectiveForm from "./create-collective-form";
 
 export default async function Home() {
   const session = await auth();
@@ -37,5 +38,9 @@ function Page() {
 }
 
 function NoCollective() {
-  return <div>Bruh</div>;
+  return (
+    <div className="flex h-[100svh] w-full items-center justify-center">
+      <CreateCollectiveForm />
+    </div>
+  );
 }
