@@ -167,11 +167,36 @@ export const choreRouter = createTRPCRouter({
       if (frequency !== undefined) updateData.frequency = frequency;
       if (startingDate !== undefined) updateData.startingDate = startingDate;
 
-      await ctx.db.completedChore.deleteMany({
-        where: {
-          choreId: id,
-        },
-      });
+      // If the frequency is changed, remove all completed chores
+      if (frequency !== undefined) {
+        await ctx.db.completedChore.deleteMany({
+          where: {
+            choreId: id,
+          },
+        });
+        // If the starting date is changed, shift all completed chores instead
+      } else if (startingDate !== undefined) {
+        // Shift completed chores by the difference in the starting date
+        const chore = await ctx.db.chore.findUnique({
+          where: {
+            id: id,
+          },
+        });
+
+        if (chore === null) {
+          throw new Error("Chore not found");
+        }
+
+        const shiftAmount =
+          chore.startingDate.getTime() - startingDate.getTime();
+
+        // Update the completed chores by adding shiftAmount
+        await ctx.db.$queryRaw`
+          UPDATE "CompletedChore"
+          SET "completedAt" = "completedAt" + ${shiftAmount}
+          WHERE "choreId" = ${id}
+        `;
+      }
 
       await ctx.db.chore.update({
         data: updateData,
