@@ -10,6 +10,7 @@ export const shoppingListRouter = createTRPCRouter({
           item: item,
           collectiveId: ctx.session.user.collectiveId,
           isBought: false,
+          createdById: ctx.session.user.id,
         },
       });
     }),

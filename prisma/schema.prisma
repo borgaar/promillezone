@@ -54,6 +54,7 @@ model User {
     collectiveId        String?
     JoinCollectiveToken JoinCollectiveToken[]
     CompletedChore      CompletedChore[]
+    ShoppingListItem    ShoppingListItem[]
 }
 
 model Collective {
@@ -105,6 +106,10 @@ model ShoppingListItem {
     collective   Collective @relation(fields: [collectiveId], references: [id], onDelete: Cascade)
     item         String
     isBought     Boolean
+    createdAt    DateTime   @default(now())
+    createdById  String
+    createdBy    User       @relation(fields: [createdById], references: [id])
+    updatedAt    DateTime   @updatedAt
 
     @@id([collectiveId, item])
 }
