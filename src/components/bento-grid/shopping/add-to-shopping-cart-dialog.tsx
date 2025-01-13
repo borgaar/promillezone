@@ -28,7 +28,11 @@ const formSchema = z.object({
   item: z.string(),
 });
 
-export function AddToShoppingCartDialog() {
+export function AddToShoppingCartDialog({
+  onComplete,
+}: {
+  onComplete: () => void;
+}) {
   const { mutateAsync: addToList } =
     api.shoppingList.addItemToShoppingList.useMutation();
   const form = useForm<z.infer<typeof formSchema>>({
@@ -41,6 +45,7 @@ export function AddToShoppingCartDialog() {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     await addToList(values.item);
+    onComplete();
     setOpen(false);
   };
 
