@@ -66,8 +66,8 @@ model Collective {
     trashProviderSlug   String?
     users               User[]
     JoinCollectiveToken JoinCollectiveToken[]
-    ShoppingList        ShoppingList[]
     Chore               Chore[]
+    ShoppingListItem    ShoppingListItem[]
 }
 
 model JoinCollectiveToken {
@@ -100,21 +100,13 @@ model CompletedChore {
     completedAt DateTime
 }
 
-model ShoppingList {
-    id               String             @id @default(uuid())
-    name             String
-    owner            String
-    collective       Collective         @relation(fields: [owner], references: [id])
-    ShoppingListItem ShoppingListItem[]
-}
-
 model ShoppingListItem {
-    shoppingListId String
-    shoppingList   ShoppingList @relation(fields: [shoppingListId], references: [id], onDelete: Cascade)
-    item           String
-    isBought       Boolean
+    collectiveId String
+    collective   Collective @relation(fields: [collectiveId], references: [id], onDelete: Cascade)
+    item         String
+    isBought     Boolean
 
-    @@id([shoppingListId, item])
+    @@id([collectiveId, item])
 }
 
 model VerificationToken {
