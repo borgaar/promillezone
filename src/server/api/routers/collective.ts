@@ -150,11 +150,11 @@ export const collectiveRouter = createTRPCRouter({
       await ctx.db.$transaction(async (tx) => {
         const result = await collectiveIdFromJoinToken(tx, token);
 
+        void cleanupExpiredTokens(ctx.db);
+
         if (!result) {
           throw new Error("Invalid token");
         }
-
-        void cleanupExpiredTokens(ctx.db);
 
         await tx.user.update({
           data: {
