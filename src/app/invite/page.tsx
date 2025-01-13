@@ -5,8 +5,10 @@ import JoinButton from "./join-button";
 export default async function InvitePage({
   searchParams,
 }: {
-  searchParams?: Record<string, string | string[] | undefined>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  searchParams?: any;
 }) {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
   const inviteToken = searchParams?.code as string | undefined;
 
   if (!inviteToken) {
