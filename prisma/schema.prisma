@@ -98,6 +98,7 @@ model CompletedChore {
     chore       Chore    @relation(fields: [choreId], references: [id], onDelete: Cascade)
     userId      String
     user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    choreDueAt  DateTime
     completedAt DateTime
 }
 

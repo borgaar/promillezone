@@ -109,7 +109,7 @@ export const choreRouter = createTRPCRouter({
               .findFirst({
                 where: {
                   choreId: chore.id,
-                  completedAt: chore.startingDate,
+                  choreDueAt: chore.startingDate,
                   chore: {
                     collectiveId: ctx.session.user.collectiveId,
                   },
@@ -220,6 +220,36 @@ export const choreRouter = createTRPCRouter({
       await ctx.db.chore.delete({
         where: {
           id: choreId,
+        },
+      });
+    }),
+  completeChore: collectiveProcedure
+    .input(
+      z.object({
+        choreId: z.string(),
+        choreDueDate: z.date(),
+      }),
+    )
+    .mutation(async ({ ctx, input: { choreDueDate, choreId } }) => {
+      const chore = await ctx.db.chore.findUnique({
+        where: {
+          id: choreId,
+        },
+      });
+
+      if (chore === null) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Chore was not found",
+        });
+      }
+
+      await ctx.db.completedChore.create({
+        data: {
+          choreId: choreId,
+          choreDueAt: choreDueDate,
+          completedAt: new Date(),
+          userId: ctx.session.user.id,
         },
       });
     }),
