@@ -13,6 +13,13 @@ export const shoppingListRouter = createTRPCRouter({
         },
       });
     }),
+  getShoppingList: collectiveProcedure.query(async ({ ctx }) => {
+    return await ctx.db.shoppingListItem.findMany({
+      where: {
+        collectiveId: ctx.session.user.collectiveId,
+      },
+    });
+  }),
   removeItemFromShoppingList: collectiveProcedure
     .input(z.string().nonempty())
     .mutation(async ({ ctx, input: itemId }) => {
