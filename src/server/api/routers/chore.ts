@@ -1,4 +1,5 @@
 import { collectiveProcedure, createTRPCRouter } from "@/server/api/trpc";
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 export const choreRouter = createTRPCRouter({
@@ -32,13 +33,15 @@ export const choreRouter = createTRPCRouter({
     )
     .query(async ({ ctx, input: { from, to } }) => {
       if (to < from) {
-        throw new Error(
-          "Invalid date range: " +
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message:
+            "Invalid date range: " +
             from.toISOString() +
             " -> " +
             to.toISOString() +
             ". 'to' date must be after 'from' date.",
-        );
+        });
       }
 
       const chores = await ctx.db.chore.findMany({
@@ -69,7 +72,10 @@ export const choreRouter = createTRPCRouter({
 
       // If there are no users in the collective, we can't assign chores (if this throws, there is something seriously wrong)
       if (usersInCollective.length === 0) {
-        throw new Error("No users in collective");
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "No users in collective",
+        });
       }
 
       // Sort users by name to ensure consistent assignment order and workload for each user
@@ -184,7 +190,10 @@ export const choreRouter = createTRPCRouter({
         });
 
         if (chore === null) {
-          throw new Error("Chore not found");
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Chore was not found",
+          });
         }
 
         const shiftAmount =

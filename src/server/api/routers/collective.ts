@@ -6,6 +6,7 @@ import {
 import type { PrismaClient } from "@prisma/client";
 import { z } from "zod";
 import { env } from "../../../env";
+import { TRPCError } from "@trpc/server";
 
 const collectiveIdFromJoinToken = async (
   db: Pick<PrismaClient, "joinCollectiveToken">,
@@ -58,7 +59,11 @@ export const collectiveRouter = createTRPCRouter({
     .query(async ({ ctx, input: inviteToken }) => {
       const result = await collectiveIdFromJoinToken(ctx.db, inviteToken);
 
-      if (!result) throw Error("Invalid token");
+      if (!result)
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "The token has expired or does not exist",
+        });
 
       return await ctx.db.collective.findUnique({
         where: {
@@ -153,7 +158,10 @@ export const collectiveRouter = createTRPCRouter({
         void cleanupExpiredTokens(ctx.db);
 
         if (!result) {
-          throw new Error("Invalid token");
+          throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message: "The token has expired or does not exist",
+          });
         }
 
         await tx.user.update({
