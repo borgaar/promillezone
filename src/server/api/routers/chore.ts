@@ -12,12 +12,25 @@ export const choreRouter = createTRPCRouter({
   getDueChores: collectiveProcedure
     .input(
       z.object({
-        collectiveId: z.string(),
         from: z.date(),
         to: z.date(),
       }),
     )
-    .query(async ({ ctx, input: { collectiveId, from, to } }) => {
+    .output(
+      z
+        .object({
+          description: z.string(),
+          dueDate: z.date(),
+          user: z.object({
+            name: z.string(),
+            image: z.string(),
+            id: z.string(),
+          }),
+          isCompleted: z.boolean(),
+        })
+        .array(),
+    )
+    .query(async ({ ctx, input: { from, to } }) => {
       if (to < from) {
         throw new Error(
           "Invalid date range: " +
@@ -28,73 +41,137 @@ export const choreRouter = createTRPCRouter({
         );
       }
 
-      return await ctx.db.dueChore.findMany({
+      const chores = await ctx.db.chore.findMany({
         where: {
-          chore: {
-            collectiveId: collectiveId,
-          },
-          AND: {
-            dueDate: {
-              gte: from,
-              lte: to,
-            },
-          },
-        },
-        include: {
-          chore: true,
-          assignee: true,
+          collectiveId: ctx.session.user.collectiveId,
         },
       });
-    }),
-  completeChore: collectiveProcedure
-    .input(
-      z.object({
-        choreId: z.string(),
-        dueDate: z.date(),
-      }),
-    )
-    .mutation(async ({ ctx, input: { choreId, dueDate } }) => {
-      await ctx.db.dueChore.update({
-        data: {
-          completedAt: new Date(),
-        },
-        where: {
-          dueDate_choreId: {
-            choreId: choreId,
-            dueDate: dueDate,
+
+      const dueChores: {
+        description: string;
+        dueDate: Date;
+        user: { name: string; image: string; id: string };
+        isCompleted: boolean;
+      }[] = [];
+
+      // Get all users in the collective
+      const usersInCollective = (
+        await ctx.db.user.findMany({
+          where: {
+            collectiveId: ctx.session.user.collectiveId,
           },
-        },
-      });
+        })
+      ).map((user) => ({
+        name: user.name ?? "Unknown",
+        image: user.image ?? "",
+        id: user.id,
+      }));
+
+      // If there are no users in the collective, we can't assign chores (if this throws, there is something seriously wrong)
+      if (usersInCollective.length === 0) {
+        throw new Error("No users in collective");
+      }
+
+      // Sort users by name to ensure consistent assignment order and workload for each user
+      const assignees = usersInCollective.sort((a, b) =>
+        a.name.localeCompare(b.name),
+      );
+
+      // Iterate over all chores and assign them to users
+      for (const chore of chores) {
+        // Start with the first user in the list at the original starting date
+        let assigneeCounter =
+          (chore.startingDate.getTime() - from.getTime()) / chore.frequency;
+
+        // Skip forward to the first due date after the 'from' date
+        chore.startingDate = new Date(
+          ((from.getTime() - chore.startingDate.getTime()) % chore.frequency) +
+            chore.frequency,
+        );
+
+        // While we are still inside the query range
+        while (chore.startingDate <= to) {
+          // Get the next assignee
+          const assignee = assignees[assigneeCounter % assignees.length]!;
+
+          // Add the chore to the list of due chores
+          dueChores.push({
+            description: chore.description,
+            dueDate: chore.startingDate,
+            user: assignee,
+            isCompleted: await ctx.db.completedChore
+              .findFirst({
+                where: {
+                  choreId: chore.id,
+                  completedAt: chore.startingDate,
+                  chore: {
+                    collectiveId: ctx.session.user.collectiveId,
+                  },
+                },
+              })
+              .then((completedChore) => completedChore !== null),
+          });
+
+          // Go to the next assignee
+          assigneeCounter++;
+
+          // Move the chore to the next due date
+          chore.startingDate = new Date(
+            chore.startingDate.getTime() + chore.frequency,
+          );
+        }
+      }
+
+      // Sort due chores by due date
+      dueChores.sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime());
+
+      return dueChores;
     }),
   createChore: collectiveProcedure
     .input(
       z.object({
-        name: z.string().nonempty(),
+        description: z.string().nonempty(),
         frequency: z.number().nonnegative().min(1),
+        startingDate: z.date(),
       }),
     )
-    .mutation(async ({ ctx, input: { name, frequency } }) => {
-      await ctx.db.chore.create({
-        data: {
-          name: name,
-          frequency: frequency,
-          collectiveId: ctx.session.user.collectiveId,
-        },
-      });
-    }),
+    .mutation(
+      async ({ ctx, input: { description, frequency, startingDate } }) => {
+        await ctx.db.chore.create({
+          data: {
+            description: description,
+            frequency: frequency,
+            collectiveId: ctx.session.user.collectiveId,
+            startingDate: startingDate,
+          },
+        });
+      },
+    ),
   modifyChore: collectiveProcedure
     .input(
       z.object({
         id: z.string(),
         name: z.string().optional(),
         frequency: z.number().nonnegative().min(1).optional(),
+        startingDate: z.date().optional(),
       }),
     )
-    .mutation(async ({ ctx, input: { id, name, frequency } }) => {
-      const updateData: { name?: string; frequency?: number } = {};
+    .mutation(async ({ ctx, input: { id, name, frequency, startingDate } }) => {
+      const updateData: {
+        name?: string;
+        frequency?: number;
+        startingDate?: Date;
+      } = {};
 
       if (name !== undefined) updateData.name = name;
       if (frequency !== undefined) updateData.frequency = frequency;
+      if (startingDate !== undefined) updateData.startingDate = startingDate;
+
+      await ctx.db.completedChore.deleteMany({
+        where: {
+          choreId: id,
+        },
+      });
 
       await ctx.db.chore.update({
         data: updateData,
@@ -112,74 +189,4 @@ export const choreRouter = createTRPCRouter({
         },
       });
     }),
-  generateDueChores: collectiveProcedure
-    .input(
-      z.object({
-        id: z.string(),
-        numberOfWeeks: z.number().nonnegative().min(1).max(26),
-      }),
-    )
-    .mutation(
-      async ({ ctx, input: { id, numberOfWeeks: numberOfWeeksToGen } }) => {
-        return await ctx.db.$transaction(async (db) => {
-          const chore = await db.chore.findUnique({ where: { id } });
-
-          if (chore === null) {
-            throw new Error("Chore not found");
-          }
-
-          const frequency = chore.frequency;
-          const daysToGenerate = numberOfWeeksToGen * 7;
-          const assignees = await db.user.findMany({
-            where: {
-              collectiveId: ctx.session.user.collectiveId,
-            },
-          });
-
-          if (assignees.length === 0) {
-            throw new Error("No users in collective");
-          }
-
-          // Shuffle assignees
-          assignees.sort((_, __) => Math.random() - 0.5);
-
-          // Remove all existing due chores for this chore
-          await db.dueChore.deleteMany({
-            where: {
-              choreId: id,
-              dueDate: {
-                gte: new Date(),
-              },
-            },
-          });
-
-          const dueChoresToCreate = [];
-
-          // Regenerate due chores
-          for (let day = 0; day < daysToGenerate; day++) {
-            if (day % frequency === 0) {
-              const assignee = assignees[day % assignees.length]!.id;
-              dueChoresToCreate.push({
-                choreId: id,
-                dueDate: new Date(Date.now() + day * 24 * 60 * 60 * 1000),
-                assigneeId: assignee,
-              });
-            }
-          }
-
-          await db.dueChore.createMany({
-            data: dueChoresToCreate,
-          });
-
-          return db.dueChore.findMany({
-            where: {
-              choreId: id,
-              dueDate: {
-                gte: new Date(),
-              },
-            },
-          });
-        });
-      },
-    ),
 });

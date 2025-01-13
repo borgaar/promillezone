@@ -53,7 +53,7 @@ model User {
     collective          Collective?           @relation(fields: [collectiveId], references: [id])
     collectiveId        String?
     JoinCollectiveToken JoinCollectiveToken[]
-    DueChore            DueChore[]
+    CompletedChore      CompletedChore[]
 }
 
 model Collective {
@@ -66,8 +66,8 @@ model Collective {
     trashProviderSlug   String?
     users               User[]
     JoinCollectiveToken JoinCollectiveToken[]
-    DueChore            Chore[]
     ShoppingList        ShoppingList[]
+    Chore               Chore[]
 }
 
 model JoinCollectiveToken {
@@ -80,23 +80,24 @@ model JoinCollectiveToken {
 }
 
 model Chore {
-    id           String     @id @default(uuid())
-    name         String
-    collective   Collective @relation(fields: [collectiveId], references: [id])
-    collectiveId String
-    DueChore     DueChore[]
-    frequency    Int
+    id             String           @id @default(uuid())
+    description    String
+    collective     Collective       @relation(fields: [collectiveId], references: [id])
+    collectiveId   String
+    frequency      Int
+    startingDate   DateTime
+    CompletedChore CompletedChore[]
+
+    @@unique([collectiveId, description])
 }
 
-model DueChore {
-    chore       Chore     @relation(fields: [choreId], references: [id], onDelete: Cascade)
+model CompletedChore {
+    id          String   @id @default(uuid())
     choreId     String
-    assignee    User      @relation(fields: [assigneeId], references: [id])
-    assigneeId  String
-    dueDate     DateTime
-    completedAt DateTime?
-
-    @@id([dueDate, choreId])
+    chore       Chore    @relation(fields: [choreId], references: [id], onDelete: Cascade)
+    userId      String
+    user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    completedAt DateTime
 }
 
 model ShoppingList {

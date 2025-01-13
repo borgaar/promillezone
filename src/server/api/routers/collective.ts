@@ -99,10 +99,10 @@ export const collectiveRouter = createTRPCRouter({
   createCollective: protectedProcedure
     .input(
       z.object({
-        collectiveName: z.string().min(1).max(32),
-        streetName: z.string().min(1),
-        houseNumber: z.string().min(1),
-        postalCode: z.string().min(1),
+        collectiveName: z.string().nonempty().max(32),
+        streetName: z.string().nonempty(),
+        houseNumber: z.string().nonempty(),
+        postalCode: z.string().nonempty(),
       }),
     )
     .mutation(
