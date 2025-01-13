@@ -43,12 +43,8 @@ services:
   promillezone-prod:
     container_name: promillezone-web-app
     image: ghcr.io/borgaar/promillezone:latest
-    environment:
-      - AUTH_SECRET=${AUTH_SECRET}
-      - NEXTAUTH_URL=${NEXTAUTH_URL}
-      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
-      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
-      - DATABASE_URL=${DATABASE_URL}
+    env_file:
+      - .env
     command: sh -c 'prisma migrate deploy && node server.js'
     expose:
       - 3000
