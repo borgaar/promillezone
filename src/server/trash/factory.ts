@@ -1,4 +1,3 @@
-import { env } from "../../env";
 import type { TrashProvider } from "./provider";
 import TRV from "./provider/trv";
 
@@ -22,7 +21,7 @@ class TrashProviderFactory {
   static getAll(): TrashProvider[] {
     return Object.values(TrashProviderFactory.providers).map((p) => ({
       ...p,
-      logoUrl: p.logoUrl ? env.NEXTAUTH_URL + p.logoUrl : undefined,
+      logoUrl: p.logoUrl,
     }));
   }
 }
