@@ -9,9 +9,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus } from "lucide-react";
+import { Edit, Save } from "lucide-react";
 import { useState } from "react";
-import { api } from "../../../trpc/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -24,14 +23,13 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "../../../hooks/use-toast";
+import { type ChoreItem } from "./content";
 
 const formSchema = z.object({
   item: z.string(),
 });
 
-export function AddItemDialog({ onComplete }: { onComplete: () => void }) {
-  const { mutateAsync: addToList } =
-    api.shoppingList.addItemToShoppingList.useMutation();
+export function EditChoreDialog({ chore: item }: { chore: ChoreItem }) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -43,31 +41,34 @@ export function AddItemDialog({ onComplete }: { onComplete: () => void }) {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      await addToList(values.item);
-      onComplete();
-      setOpen(false);
+      // await editItem({
+      //   oldName: item.item,
+      //   newName: values.item,
+      // });
     } catch {
+      // Duplicate item
       toast({
-        title: "Kunne ikke legge til artikkelen",
+        title: "Kunne ikke oppdatere artikkelen",
         description: "Det finnes allerede en artikkel med dette navnet",
         variant: "destructive",
       });
     }
+
+    setOpen(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">
-          <Plus />
-          Legg til
+        <Button variant="outline" size="icon">
+          <Edit />
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <DialogHeader>
-              <DialogTitle>Legg til en artikkel</DialogTitle>
+              <DialogTitle>Endre en artikkel</DialogTitle>
             </DialogHeader>
             <FormField
               control={form.control}
@@ -83,9 +84,7 @@ export function AddItemDialog({ onComplete }: { onComplete: () => void }) {
             />
             <DialogFooter>
               <Button type="submit">
-                {" "}
-                <Plus />
-                Legg til
+                <Save /> Lagre
               </Button>
             </DialogFooter>
           </form>

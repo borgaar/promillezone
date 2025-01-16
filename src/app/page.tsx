@@ -5,6 +5,8 @@ import TrashTile from "../components/bento-grid/trash/tile";
 import BusTile from "../components/bento-grid/bus/tile";
 import ShoppingTile from "../components/bento-grid/shopping/tile";
 import CreateCollectiveForm from "./create-collective-form";
+import ChoresTile from "../components/bento-grid/chores/tile";
+import BookingTile from "../components/bento-grid/booking/tile";
 
 export default async function Home() {
   const session = await auth();
@@ -14,7 +16,7 @@ export default async function Home() {
   }
 
   try {
-    const collective = await api.collective.getCollective();
+    const _ = await api.collective.getCollective();
 
     return <Page />;
   } catch {
@@ -26,11 +28,13 @@ function Page() {
   return (
     <HydrateClient>
       <main>
-        <div className="mx-auto grid w-full gap-4 px-2 sm:mt-4 sm:px-3 lg:grid-cols-3 lg:grid-rows-2 lg:px-4">
+        <div className="mx-auto grid h-[calc(100svh-6rem)] w-full gap-4 px-2 sm:mt-4 sm:px-3 lg:grid-cols-3 lg:grid-rows-2 lg:px-4">
           <TrashTile />
-          <MembersTile />
+          {/* <MembersTile /> */}
           <BusTile />
           <ShoppingTile />
+          <ChoresTile />
+          <BookingTile />
         </div>
       </main>
     </HydrateClient>

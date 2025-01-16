@@ -21,7 +21,7 @@ import { Suspense, useMemo } from "react";
 
 export default async function TrashTile() {
   return (
-    <Card className="relative lg:row-span-2">
+    <Card className="relative overflow-y-auto lg:row-span-1">
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <span className="flex gap-2">
@@ -29,7 +29,7 @@ export default async function TrashTile() {
           </span>
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-col items-start justify-start gap-2">
+      <CardContent className="flex flex-col items-start justify-start gap-2 overflow-y-auto">
         <Suspense>
           <TrashTileContent />
         </Suspense>

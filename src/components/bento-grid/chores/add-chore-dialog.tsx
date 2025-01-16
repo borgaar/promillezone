@@ -29,9 +29,8 @@ const formSchema = z.object({
   item: z.string(),
 });
 
-export function AddItemDialog({ onComplete }: { onComplete: () => void }) {
-  const { mutateAsync: addToList } =
-    api.shoppingList.addItemToShoppingList.useMutation();
+export function AddChoreDialog({ onComplete }: { onComplete: () => void }) {
+  const { mutateAsync: addChore } = api.chore.createChore.useMutation();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -43,7 +42,11 @@ export function AddItemDialog({ onComplete }: { onComplete: () => void }) {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      await addToList(values.item);
+      await addChore({
+        description: "Vaske kjøkkenet",
+        frequency: 3,
+        startingDate: new Date(),
+      });
       onComplete();
       setOpen(false);
     } catch {
@@ -67,7 +70,7 @@ export function AddItemDialog({ onComplete }: { onComplete: () => void }) {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <DialogHeader>
-              <DialogTitle>Legg til en artikkel</DialogTitle>
+              <DialogTitle>Legg til en arbeidsoppgave</DialogTitle>
             </DialogHeader>
             <FormField
               control={form.control}
