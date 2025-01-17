@@ -5,8 +5,6 @@ import { TRPCError } from "@trpc/server";
 export const weatherRouter = createTRPCRouter({
   getWeather: collectiveProcedure.query(
     async ({ ctx }): Promise<WeatherData> => {
-      const provider = new WeatherProvider();
-
       const data = (await ctx.db.collective.findUniqueOrThrow({
         where: {
           id: ctx.session.user.collectiveId,
@@ -35,7 +33,7 @@ export const weatherRouter = createTRPCRouter({
       const [lat, lon] = coordinates.split(",") as [string, string];
 
       try {
-        return await provider.getForecast(lat, lon);
+        return await WeatherProvider.getForecast(lat, lon);
       } catch (e) {
         console.error(e);
         throw new TRPCError({

@@ -63,7 +63,7 @@ export interface WeatherData {
 }
 
 export class WeatherProvider {
-  async getForecast(lat: string, lon: string): Promise<WeatherData> {
+  static async getForecast(lat: string, lon: string): Promise<WeatherData> {
     const response = await fetch(
       "https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${lat}&lon=${lon}" +
         new URLSearchParams({
