@@ -95,13 +95,13 @@ model Chore {
 }
 
 model CompletedChore {
-    id          String   @id @default(uuid())
-    choreId     String
-    chore       Chore    @relation(fields: [choreId], references: [id], onDelete: Cascade)
-    userId      String
-    user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-    choreDueAt  DateTime
-    completedAt DateTime
+    id                String   @id @default(uuid())
+    choreId           String
+    chore             Chore    @relation(fields: [choreId], references: [id], onDelete: Cascade)
+    completedByUserId String
+    completedByUser   User     @relation(fields: [completedByUserId], references: [id], onDelete: Cascade)
+    choreWasDueAt     DateTime
+    completedAt       DateTime
 }
 
 model ShoppingListItem {

@@ -1,6 +1,85 @@
 import { collectiveProcedure, createTRPCRouter } from "@/server/api/trpc";
+import { type CompletedChore, type Chore, type User } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+
+export interface DueChore {
+  description: string;
+  dueDate: Date;
+  assignedTo: User;
+  completedBy: User | null;
+  completionDate: Date | null;
+}
+
+export async function genDueChores(
+  from: Date,
+  to: Date,
+  chores: Chore[],
+  usersInCollective: User[],
+  getCompletedChoreCallback: (
+    choreId: string,
+    choreWasDueAt: Date,
+  ) => Promise<(CompletedChore & { completedByUser: User }) | null>,
+): Promise<DueChore[]> {
+  const UNIX_EPOCH_DAY = 1000 * 60 * 60 * 24;
+
+  // Sort users by id to ensure consistent assignment order and workload for each user
+  const assignees = usersInCollective.sort((a, b) => a.id.localeCompare(b.id));
+
+  const dueChores: DueChore[] = [];
+
+  // Iterate over all chores and assign them to users
+  for (const chore of chores) {
+    const frequency = chore.frequency * UNIX_EPOCH_DAY;
+
+    // Start with the first user in the list at the original starting date
+    let assigneeCounter =
+      (chore.startingDate.valueOf() - from.valueOf()) / frequency;
+
+    // Skip forward to the first due date after the 'from' date
+    chore.startingDate = new Date(
+      chore.startingDate.valueOf() +
+        frequency *
+          Math.ceil(
+            (from.valueOf() - chore.startingDate.valueOf()) / frequency,
+          ),
+    );
+
+    // While we are still inside the query range
+    while (chore.startingDate <= to) {
+      // Get the next assignee
+      const assignee = assignees[assigneeCounter % assignees.length]!;
+
+      const completedChore = await getCompletedChoreCallback(
+        chore.id,
+        chore.startingDate,
+      );
+
+      const completionDate = completedChore?.completedAt ?? null;
+      const completedBy = completedChore?.completedByUser ?? null;
+
+      // Add the chore to the list of due chores
+      dueChores.push({
+        description: chore.description,
+        dueDate: chore.startingDate,
+        assignedTo: assignee,
+        completedBy: completedBy,
+        completionDate: completionDate,
+      });
+
+      // Go to the next assignee
+      assigneeCounter++;
+
+      // Move the chore to the next due date
+      chore.startingDate = new Date(chore.startingDate.valueOf() + frequency);
+    }
+  }
+
+  // Sort due chores by due date
+  dueChores.sort((a, b) => a.dueDate.valueOf() - b.dueDate.valueOf());
+
+  return dueChores;
+}
 
 export const choreRouter = createTRPCRouter({
   getChores: collectiveProcedure.query(async ({ ctx }) => {
@@ -16,20 +95,6 @@ export const choreRouter = createTRPCRouter({
         from: z.date(),
         to: z.date(),
       }),
-    )
-    .output(
-      z
-        .object({
-          description: z.string(),
-          dueDate: z.date(),
-          user: z.object({
-            name: z.string(),
-            image: z.string(),
-            id: z.string(),
-          }),
-          isCompleted: z.boolean(),
-        })
-        .array(),
     )
     .query(async ({ ctx, input: { from, to } }) => {
       if (to < from) {
@@ -50,88 +115,32 @@ export const choreRouter = createTRPCRouter({
         },
       });
 
-      const dueChores: {
-        description: string;
-        dueDate: Date;
-        user: { name: string; image: string; id: string };
-        isCompleted: boolean;
-      }[] = [];
+      const assignees = await ctx.db.user.findMany({
+        where: {
+          collectiveId: ctx.session.user.collectiveId,
+        },
+      });
 
-      // Get all users in the collective
-      const usersInCollective = (
-        await ctx.db.user.findMany({
-          where: {
-            collectiveId: ctx.session.user.collectiveId,
-          },
-        })
-      ).map((user) => ({
-        name: user.name ?? "Unknown",
-        image: user.image ?? "",
-        id: user.id,
-      }));
-
-      // If there are no users in the collective, we can't assign chores (if this throws, there is something seriously wrong)
-      if (usersInCollective.length === 0) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "No users in collective",
-        });
-      }
-
-      // Sort users by name to ensure consistent assignment order and workload for each user
-      const assignees = usersInCollective.sort((a, b) =>
-        a.name.localeCompare(b.name),
-      );
-
-      // Iterate over all chores and assign them to users
-      for (const chore of chores) {
-        // Start with the first user in the list at the original starting date
-        let assigneeCounter =
-          (chore.startingDate.getTime() - from.getTime()) / chore.frequency;
-
-        // Skip forward to the first due date after the 'from' date
-        chore.startingDate = new Date(
-          ((from.getTime() - chore.startingDate.getTime()) % chore.frequency) +
-            chore.frequency,
-        );
-
-        // While we are still inside the query range
-        while (chore.startingDate <= to) {
-          // Get the next assignee
-          const assignee = assignees[assigneeCounter % assignees.length]!;
-
-          // Add the chore to the list of due chores
-          dueChores.push({
-            description: chore.description,
-            dueDate: chore.startingDate,
-            user: assignee,
-            isCompleted: await ctx.db.completedChore
-              .findFirst({
-                where: {
-                  choreId: chore.id,
-                  choreDueAt: chore.startingDate,
-                  chore: {
-                    collectiveId: ctx.session.user.collectiveId,
-                  },
-                },
-              })
-              .then((completedChore) => completedChore !== null),
+      return await genDueChores(
+        from,
+        to,
+        chores,
+        assignees,
+        async (choreId, choreWasDueAt) => {
+          return await ctx.db.completedChore.findFirst({
+            where: {
+              choreId: choreId,
+              choreWasDueAt: choreWasDueAt,
+              completedByUserId: {
+                in: assignees.map((user) => user.id),
+              },
+            },
+            include: {
+              completedByUser: true,
+            },
           });
-
-          // Go to the next assignee
-          assigneeCounter++;
-
-          // Move the chore to the next due date
-          chore.startingDate = new Date(
-            chore.startingDate.getTime() + chore.frequency,
-          );
-        }
-      }
-
-      // Sort due chores by due date
-      dueChores.sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime());
-
-      return dueChores;
+        },
+      );
     }),
   createChore: collectiveProcedure
     .input(
@@ -148,7 +157,13 @@ export const choreRouter = createTRPCRouter({
             description: description,
             frequency: frequency,
             collectiveId: ctx.session.user.collectiveId,
-            startingDate: startingDate,
+            startingDate: new Date(
+              new Date().setFullYear(
+                startingDate.getFullYear(),
+                startingDate.getMonth(),
+                startingDate.getDate(),
+              ),
+            ),
           },
         });
       },
@@ -247,9 +262,9 @@ export const choreRouter = createTRPCRouter({
       await ctx.db.completedChore.create({
         data: {
           choreId: choreId,
-          choreDueAt: choreDueDate,
-          completedAt: new Date(),
-          userId: ctx.session.user.id,
+          choreWasDueAt: choreDueDate,
+          completedAt: new Date(new Date().setHours(0, 0, 0, 0)),
+          completedByUserId: ctx.session.user.id,
         },
       });
     }),
