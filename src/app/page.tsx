@@ -1,12 +1,12 @@
 import { auth, signIn } from "@/server/auth";
 import { api, HydrateClient } from "@/trpc/server";
-import { MembersTile } from "../components/bento-grid/members/tile";
 import TrashTile from "../components/bento-grid/trash/tile";
 import BusTile from "../components/bento-grid/bus/tile";
 import ShoppingTile from "../components/bento-grid/shopping/tile";
 import CreateCollectiveForm from "./create-collective-form";
 import ChoresTile from "../components/bento-grid/chores/tile";
 import BookingTile from "../components/bento-grid/booking/tile";
+import ErikTile from "../components/bento-grid/erik/tile";
 
 export default async function Home() {
   const session = await auth();
@@ -32,6 +32,7 @@ function Page() {
           <TrashTile />
           {/* <MembersTile /> */}
           <BusTile />
+          <ErikTile />
           <ShoppingTile />
           <ChoresTile />
           <BookingTile />
