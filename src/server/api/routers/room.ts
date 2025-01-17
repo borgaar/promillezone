@@ -38,6 +38,9 @@ export const roomRouter = createTRPCRouter({
       await ctx.db.roomBooking.delete({
         where: {
           id: bookingId,
+          AND: {
+            bookerId: ctx.session.user.id,
+          },
         },
       });
     }),
