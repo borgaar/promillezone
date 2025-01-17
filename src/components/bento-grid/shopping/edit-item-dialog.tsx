@@ -102,7 +102,7 @@ export function EditItemDialog({ item }: { item: ShoppingListItem }) {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <DialogHeader>
-              <DialogTitle>Legg til en artikkel</DialogTitle>
+              <DialogTitle>Endre en artikkel</DialogTitle>
             </DialogHeader>
             <FormField
               control={form.control}

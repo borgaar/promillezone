@@ -1,21 +1,22 @@
 import { Bus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../../ui/card";
-import BusTimeTable from "./time-table";
-import { EditBusDialog } from "./edit-dialog";
 
 export default function BusTile() {
   return (
-    <Card className="relative max-lg:row-start-3 lg:col-start-2 lg:row-start-2">
+    <Card className="relative lg:col-start-2 lg:col-end-4 lg:row-start-1">
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <span className="flex gap-2">
             <Bus strokeWidth={2.5} /> Buss
           </span>
-          <EditBusDialog />
+          {/* <EditBusDialog /> */}
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <BusTimeTable />
+        <div className="flex h-full w-full items-center justify-center">
+          Bussruter kommer snart!
+        </div>
+        {/* <BusTimeTable /> */}
       </CardContent>
     </Card>
   );

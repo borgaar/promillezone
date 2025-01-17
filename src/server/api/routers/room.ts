@@ -25,7 +25,7 @@ export const roomRouter = createTRPCRouter({
 
         await db.roomBooking.create({
           data: {
-            date: new Date(),
+            date,
             collectiveId: ctx.session.user.collectiveId,
             bookerId: ctx.session.user.id,
           },
@@ -42,7 +42,7 @@ export const roomRouter = createTRPCRouter({
       });
     }),
   getRoomBookings: collectiveProcedure.query(async ({ ctx }) => {
-    await ctx.db.roomBooking.findMany({
+    return await ctx.db.roomBooking.findMany({
       where: {
         collectiveId: ctx.session.user.collectiveId,
       },
