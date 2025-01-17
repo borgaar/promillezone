@@ -12,9 +12,17 @@ import { ModeToggle } from "../theme/mode-toggle";
 import Logo from "../logo";
 import SignOutButton from "./sign-out-button";
 import { AddMemberDialogButton } from "../bento-grid/members/add-dialog";
+import { api } from "../../trpc/server";
 
 export default async function Navbar() {
   const session = await auth();
+
+  let isInCollective = true;
+  try {
+    await api.collective.getCollective();
+  } catch {
+    isInCollective = false;
+  }
 
   return (
     <Disclosure as="nav" className="w-full bg-white shadow dark:bg-neutral-900">
@@ -26,7 +34,7 @@ export default async function Navbar() {
             </div>
           </div>
           <div className="hidden gap-2 sm:ml-6 sm:flex sm:items-center">
-            <AddMemberDialogButton />
+            {isInCollective && <AddMemberDialogButton />}
             <ModeToggle />
             <NavbarMenu session={session} />
           </div>

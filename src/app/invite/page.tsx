@@ -24,10 +24,10 @@ export default async function InvitePage({
     }
 
     return (
-      <div className="bg-white">
+      <div>
         <div className="px-6 py-24 sm:px-6 sm:py-32 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-balance text-4xl font-semibold tracking-tight text-gray-900 sm:text-5xl">
+            <h2 className="text-balance text-4xl font-semibold tracking-tight text-gray-900 dark:text-gray-100 sm:text-5xl">
               Du har blitt invitert til å bli med i {collective.name}
             </h2>
             <div className="mt-10 flex items-center justify-center gap-x-6">
