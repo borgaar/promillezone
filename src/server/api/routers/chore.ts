@@ -256,11 +256,21 @@ export const choreRouter = createTRPCRouter({
   removeChore: collectiveProcedure
     .input(z.string())
     .mutation(async ({ ctx, input: choreId }) => {
-      await ctx.db.chore.delete({
-        where: {
-          id: choreId,
-        },
-      });
+      try {
+        await ctx.db.chore.delete({
+          where: {
+            id: choreId,
+            collectiveId: ctx.session.user.collectiveId,
+          },
+        });
+      } catch (e) {
+        console.error(e);
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message:
+            "Chore was not found or does not belong to the user's collective",
+        });
+      }
     }),
   completeChore: collectiveProcedure
     .input(
@@ -273,6 +283,7 @@ export const choreRouter = createTRPCRouter({
       const chore = await ctx.db.chore.findUnique({
         where: {
           id: choreId,
+          collectiveId: ctx.session.user.collectiveId,
         },
       });
 
