@@ -66,6 +66,7 @@ model Collective {
     postalCode          String
     trashAddressId      String?
     trashProviderSlug   String?
+    coordinates         String?
     users               User[]
     JoinCollectiveToken JoinCollectiveToken[]
     Chore               Chore[]
