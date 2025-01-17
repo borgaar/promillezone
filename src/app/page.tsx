@@ -28,7 +28,7 @@ function Page() {
   return (
     <HydrateClient>
       <main>
-        <div className="mx-auto grid h-[calc(100svh-6rem)] w-full gap-4 px-2 sm:mt-4 sm:px-3 lg:grid-cols-3 lg:grid-rows-2 lg:px-4">
+        <div className="mx-auto flex w-full flex-col gap-4 px-2 sm:mt-4 sm:px-3 lg:grid lg:h-[calc(100svh-6rem)] lg:grid-cols-3 lg:grid-rows-2 lg:px-4">
           <TrashTile />
           {/* <MembersTile /> */}
           <BusTile />
