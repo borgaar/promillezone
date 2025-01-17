@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { api } from "../../trpc/server";
 import JoinButton from "./join-button";
+import { signIn } from "../../server/auth";
 
 export default async function InvitePage({
   searchParams,
@@ -15,26 +16,30 @@ export default async function InvitePage({
     return <NotFound />;
   }
 
-  const collective = await api.collective.getCollectivePreview(inviteToken);
+  try {
+    const collective = await api.collective.getCollectivePreview(inviteToken);
 
-  if (!collective) {
-    return <NotFound />;
-  }
+    if (!collective) {
+      return <NotFound />;
+    }
 
-  return (
-    <div className="bg-white">
-      <div className="px-6 py-24 sm:px-6 sm:py-32 lg:px-8">
-        <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-balance text-4xl font-semibold tracking-tight text-gray-900 sm:text-5xl">
-            Du har blitt invitert til å bli med i {collective.name}
-          </h2>
-          <div className="mt-10 flex items-center justify-center gap-x-6">
-            <JoinButton token={inviteToken} />
+    return (
+      <div className="bg-white">
+        <div className="px-6 py-24 sm:px-6 sm:py-32 lg:px-8">
+          <div className="mx-auto max-w-2xl text-center">
+            <h2 className="text-balance text-4xl font-semibold tracking-tight text-gray-900 sm:text-5xl">
+              Du har blitt invitert til å bli med i {collective.name}
+            </h2>
+            <div className="mt-10 flex items-center justify-center gap-x-6">
+              <JoinButton token={inviteToken} />
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  } catch {
+    return signIn(undefined, { redirectTo: "/invite?code=" + inviteToken });
+  }
 }
 
 function NotFound() {
