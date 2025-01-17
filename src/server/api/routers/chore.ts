@@ -171,64 +171,88 @@ export const choreRouter = createTRPCRouter({
   modifyChore: collectiveProcedure
     .input(
       z.object({
-        id: z.string(),
+        choreId: z.string(),
         name: z.string().optional(),
         frequency: z.number().nonnegative().min(1).optional(),
         startingDate: z.date().optional(),
       }),
     )
-    .mutation(async ({ ctx, input: { id, name, frequency, startingDate } }) => {
-      const updateData: {
-        name?: string;
-        frequency?: number;
-        startingDate?: Date;
-      } = {};
-
-      if (name !== undefined) updateData.name = name;
-      if (frequency !== undefined) updateData.frequency = frequency;
-      if (startingDate !== undefined) updateData.startingDate = startingDate;
-
-      // If the frequency is changed, remove all completed chores
-      if (frequency !== undefined) {
-        await ctx.db.completedChore.deleteMany({
-          where: {
-            choreId: id,
-          },
-        });
-        // If the starting date is changed, shift all completed chores instead
-      } else if (startingDate !== undefined) {
-        // Shift completed chores by the difference in the starting date
+    .mutation(
+      async ({
+        ctx,
+        input: { choreId: choreId, name, frequency, startingDate },
+      }) => {
         const chore = await ctx.db.chore.findUnique({
           where: {
-            id: id,
+            id: choreId,
           },
         });
 
-        if (chore === null) {
+        // Check vilidity and permissions
+        if (!chore) {
           throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "Chore was not found",
+            code: "NOT_FOUND",
+            message: "Chore not found",
+          });
+        } else if (chore.collectiveId !== ctx.session.user.collectiveId) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Chore does not belong to the user's collective",
           });
         }
 
-        const shiftAmount =
-          chore.startingDate.getTime() - startingDate.getTime();
+        const updateData: {
+          name?: string;
+          frequency?: number;
+          startingDate?: Date;
+        } = {};
 
-        // Update the completed chores by adding shiftAmount
-        await ctx.db.$queryRaw`
+        if (name !== undefined) updateData.name = name;
+        if (frequency !== undefined) updateData.frequency = frequency;
+        if (startingDate !== undefined) updateData.startingDate = startingDate;
+
+        // If the frequency is changed, remove all completed chores
+        if (frequency !== undefined) {
+          await ctx.db.completedChore.deleteMany({
+            where: {
+              choreId: choreId,
+            },
+          });
+          // If the starting date is changed, shift all completed chores instead
+        } else if (startingDate !== undefined) {
+          // Shift completed chores by the difference in the starting date
+          const chore = await ctx.db.chore.findUnique({
+            where: {
+              id: choreId,
+            },
+          });
+
+          if (chore === null) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: "Chore was not found",
+            });
+          }
+
+          const shiftAmount =
+            chore.startingDate.getTime() - startingDate.getTime();
+
+          // Update the completed chores by adding shiftAmount
+          await ctx.db.$queryRaw`
           UPDATE "CompletedChore"
           SET "completedAt" = "completedAt" + ${shiftAmount}
-          WHERE "choreId" = ${id}
+          WHERE "choreId" = ${choreId}
         `;
-      }
+        }
 
-      await ctx.db.chore.update({
-        data: updateData,
-        where: {
-          id: id,
-        },
-      });
-    }),
+        await ctx.db.chore.update({
+          data: updateData,
+          where: {
+            id: choreId,
+          },
+        });
+      },
+    ),
   removeChore: collectiveProcedure
     .input(z.string())
     .mutation(async ({ ctx, input: choreId }) => {
