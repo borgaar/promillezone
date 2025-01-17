@@ -1,5 +1,8 @@
 import { BookCheck, Bus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../../ui/card";
+import BookingContent from "./bookings";
+import PickDateDialog from "./pick-date-dialog";
+import Bookings from "./bookings";
 
 export default function BookingTile() {
   return (
@@ -7,16 +10,13 @@ export default function BookingTile() {
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <span className="flex gap-2">
-            <BookCheck strokeWidth={2.5} /> Rombooking
+            <BookCheck strokeWidth={2.5} /> Vorsbooking
           </span>
-          {/* <EditBusDialog /> */}
+          <PickDateDialog />
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="flex h-full w-full items-center justify-center">
-          Rombooking kommer snart!
-        </div>
-        {/* <BusTimeTable /> */}
+      <CardContent className="space-y-2">
+        <Bookings />
       </CardContent>
     </Card>
   );
