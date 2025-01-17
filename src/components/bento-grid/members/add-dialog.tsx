@@ -10,7 +10,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Check, Copy, Plus } from "lucide-react";
+import { Check, Copy, Plus, User } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { useEffect, useState } from "react";
 import { api, type RouterOutputs } from "../../../trpc/react";
@@ -42,7 +42,7 @@ export function AddMemberDialogButton() {
     <Dialog>
       <DialogTrigger asChild>
         <Button variant="outline">
-          <Plus />
+          <User />
           Legg til
         </Button>
       </DialogTrigger>
