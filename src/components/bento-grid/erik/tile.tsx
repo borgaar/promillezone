@@ -21,7 +21,7 @@ export default function ErikTile() {
           <span>Om</span>
           <span className="text-7xl font-black">
             {" "}
-            {differenceInDays(date, new Date())}{" "}
+            {differenceInDays(date, new Date()) + 1}{" "}
           </span>
           <span>dager</span>
         </div>
