@@ -19,7 +19,7 @@ export const weatherRouter = createTRPCRouter({
       if (!coordinates) {
         throw new TRPCError({
           code: "PRECONDITION_FAILED",
-          message: "Coordinates for this collective are not set up!",
+          message: "Collective has no coordinates in database",
         });
       }
 
