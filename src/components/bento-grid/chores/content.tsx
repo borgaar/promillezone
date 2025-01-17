@@ -46,24 +46,25 @@ export default function ChoresContent() {
     <>
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
-          <span className="flex gap-2">
+          <span className="mt-2 flex gap-2">
             <BookCheck strokeWidth={2.5} /> Arbeidsoppgaver
           </span>
           <div className="flex w-full items-center justify-end gap-2">
-            <ConfigureChoresDialog />
+            {/* <ConfigureChoresDialog /> */}
           </div>
         </CardTitle>
       </CardHeader>
       <CardContent className="flex-grow space-y-4">
-        {Boolean(chores) &&
+        Arbeidsoppgaver kommer snart!
+        {/* {Boolean(chores) &&
           chores!.map((chore) => (
             <ChoreItem
               key={chore.description + chore.dueDate.toISOString()}
               chore={chore}
             />
-          ))}
+          ))} */}
       </CardContent>
-      <CardFooter className="flex items-center justify-end gap-2">
+      {/* <CardFooter className="flex items-center justify-end gap-2">
         <Button variant={"outline"} size={"icon"} onClick={decrementWeek}>
           <ChevronLeft />
         </Button>
@@ -71,7 +72,7 @@ export default function ChoresContent() {
         <Button variant={"outline"} size={"icon"} onClick={incrementWeek}>
           <ChevronRight />
         </Button>
-      </CardFooter>
+      </CardFooter> */}
     </>
   );
 }

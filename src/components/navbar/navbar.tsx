@@ -10,6 +10,7 @@ import { auth } from "../../server/auth";
 import NavbarMenu from "./menu";
 import { ModeToggle } from "../theme/mode-toggle";
 import Logo from "../logo";
+import SignOutButton from "./sign-out-button";
 
 export default async function Navbar() {
   const session = await auth();
@@ -48,78 +49,31 @@ export default async function Navbar() {
       </div>
 
       <DisclosurePanel className="sm:hidden">
-        <div className="space-y-1 pb-3 pt-2">
-          {/* Current: "bg-neutral-50 border-neutral-500 text-neutral-700", Default: "border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700" */}
-          <DisclosureButton
-            as="a"
-            href="#"
-            className="block border-l-4 border-neutral-500 bg-neutral-50 py-2 pl-3 pr-4 text-base font-medium text-neutral-700"
-          >
-            Dashboard
-          </DisclosureButton>
-          <DisclosureButton
-            as="a"
-            href="#"
-            className="block border-l-4 border-transparent py-2 pl-3 pr-4 text-base font-medium text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700"
-          >
-            Team
-          </DisclosureButton>
-          <DisclosureButton
-            as="a"
-            href="#"
-            className="block border-l-4 border-transparent py-2 pl-3 pr-4 text-base font-medium text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700"
-          >
-            Projects
-          </DisclosureButton>
-          <DisclosureButton
-            as="a"
-            href="#"
-            className="block border-l-4 border-transparent py-2 pl-3 pr-4 text-base font-medium text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700"
-          >
-            Calendar
-          </DisclosureButton>
-        </div>
         <div className="border-t border-gray-200 pb-3 pt-4">
-          <div className="flex items-center px-4">
-            <div className="shrink-0">
-              <img
-                alt=""
-                src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-                className="size-10 rounded-full"
-              />
-            </div>
-            <div className="ml-3">
-              <div className="text-base font-medium text-gray-800">
-                Tom Cook
+          <div className="flex justify-between px-4">
+            <div className="flex flex-row justify-start">
+              {session?.user.image && (
+                <div className="shrink-0">
+                  <img
+                    alt=""
+                    src={session?.user.image}
+                    className="size-10 rounded-full"
+                  />
+                </div>
+              )}
+              <div className="ml-3">
+                <div className="text-base font-medium text-gray-800 dark:text-gray-100">
+                  {session?.user.name}
+                </div>
+                <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                  {session?.user.email}
+                </div>
               </div>
-              <div className="text-sm font-medium text-gray-500">
-                tom@example.com
-              </div>
             </div>
-            <ModeToggle />
-          </div>
-          <div className="mt-3 space-y-1">
-            <DisclosureButton
-              as="a"
-              href="#"
-              className="block px-4 py-2 text-base font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-800"
-            >
-              Your Profile
-            </DisclosureButton>
-            <DisclosureButton
-              as="a"
-              href="#"
-              className="block px-4 py-2 text-base font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-800"
-            >
-              Settings
-            </DisclosureButton>
-            <DisclosureButton
-              as="a"
-              href="#"
-              className="block px-4 py-2 text-base font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-800"
-            >
-              Sign out
-            </DisclosureButton>
+            <div className="flex flex-row gap-4">
+              <SignOutButton />
+              <ModeToggle />
+            </div>
           </div>
         </div>
       </DisclosurePanel>
