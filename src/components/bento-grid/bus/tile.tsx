@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "../../ui/card";
 
 export default function BusTile() {
   return (
-    <Card className="relative lg:col-start-2 lg:col-end-4 lg:row-start-1">
+    <Card className="relative lg:col-start-2 lg:col-end-3 lg:row-start-1">
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <span className="flex gap-2">
