@@ -2,14 +2,10 @@
 
 import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import { signIn, signOut } from "next-auth/react";
-import type { auth } from "../../server/auth";
 import { MenuIcon } from "lucide-react";
+import type { Session } from "next-auth";
 
-export default function NavbarMenu({
-  session,
-}: {
-  session: ReturnType<typeof auth>;
-}) {
+export default function NavbarMenu({ session }: { session: Session | null }) {
   return (
     <Menu as="div" className="relative">
       <div>
@@ -19,7 +15,7 @@ export default function NavbarMenu({
           {Boolean(session?.user.image) ? (
             <img
               alt=""
-              src={session?.user.image}
+              src={session!.user.image!}
               className="size-8 rounded-md"
             />
           ) : (
