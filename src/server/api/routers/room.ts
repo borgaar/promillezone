@@ -1,4 +1,5 @@
 import { collectiveProcedure, createTRPCRouter } from "@/server/api/trpc";
+import { Prisma } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
@@ -35,14 +36,20 @@ export const roomRouter = createTRPCRouter({
   removeRoomBooking: collectiveProcedure
     .input(z.string())
     .mutation(async ({ ctx, input: bookingId }) => {
-      await ctx.db.roomBooking.delete({
+      const deletedBooking = await ctx.db.roomBooking.delete({
         where: {
           id: bookingId,
-          AND: {
-            bookerId: ctx.session.user.id,
-          },
+          bookerId: ctx.session.user.id,
         },
       });
+
+      if (!deletedBooking) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message:
+            "Booking was not found or user is not authorized to delete it",
+        });
+      }
     }),
   getRoomBookings: collectiveProcedure.query(async ({ ctx }) => {
     return await ctx.db.roomBooking.findMany({
