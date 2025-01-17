@@ -23,9 +23,11 @@ export default function RootLayout({
       <body>
         <SessionProvider>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-            <Navbar />
-            <TRPCReactProvider>{children}</TRPCReactProvider>
-            <Toaster />
+            <TRPCReactProvider>
+              <Navbar />
+              {children}
+              <Toaster />
+            </TRPCReactProvider>
           </ThemeProvider>
         </SessionProvider>
       </body>

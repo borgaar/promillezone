@@ -11,6 +11,7 @@ import NavbarMenu from "./menu";
 import { ModeToggle } from "../theme/mode-toggle";
 import Logo from "../logo";
 import SignOutButton from "./sign-out-button";
+import { AddMemberDialogButton } from "../bento-grid/members/add-dialog";
 
 export default async function Navbar() {
   const session = await auth();
@@ -24,10 +25,9 @@ export default async function Navbar() {
               <Logo className="fill-black dark:fill-white" />
             </div>
           </div>
-          <div className="hidden sm:ml-6 sm:flex sm:items-center">
+          <div className="hidden gap-2 sm:ml-6 sm:flex sm:items-center">
+            <AddMemberDialogButton />
             <ModeToggle />
-            {/* Profile dropdown */}
-            {/* @ts-expect-error type is correct */}
             <NavbarMenu session={session} />
           </div>
           <div className="-mr-2 flex items-center sm:hidden">
@@ -65,13 +65,14 @@ export default async function Navbar() {
                 <div className="text-base font-medium text-gray-800 dark:text-gray-100">
                   {session?.user.name}
                 </div>
-                <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                <div className="text-xs font-medium text-gray-500 dark:text-gray-400">
                   {session?.user.email}
                 </div>
               </div>
             </div>
-            <div className="flex flex-row gap-4">
+            <div className="flex flex-row gap-2">
               <SignOutButton />
+              <AddMemberDialogButton />
               <ModeToggle />
             </div>
           </div>

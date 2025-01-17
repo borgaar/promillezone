@@ -3,6 +3,7 @@
 import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import { signIn, signOut } from "next-auth/react";
 import type { auth } from "../../server/auth";
+import { MenuIcon } from "lucide-react";
 
 export default function NavbarMenu({
   session,
@@ -10,16 +11,20 @@ export default function NavbarMenu({
   session: ReturnType<typeof auth>;
 }) {
   return (
-    <Menu as="div" className="relative ml-3">
+    <Menu as="div" className="relative">
       <div>
-        <MenuButton className="relative flex rounded-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-neutral-500 focus:ring-offset-2">
+        <MenuButton className="relative flex rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-neutral-500 focus:ring-offset-2">
           <span className="absolute -inset-1.5" />
           <span className="sr-only">Open user menu</span>
-          <img
-            alt=""
-            src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-            className="size-8 rounded-full"
-          />
+          {Boolean(session?.user.image) ? (
+            <img
+              alt=""
+              src={session?.user.image}
+              className="size-8 rounded-md"
+            />
+          ) : (
+            <MenuIcon />
+          )}
         </MenuButton>
       </div>
       <MenuItems
@@ -28,14 +33,6 @@ export default function NavbarMenu({
       >
         {Boolean(session) ? (
           <>
-            {/* <MenuItem>
-              <a
-                href="#"
-                className="block px-4 py-2 text-sm text-gray-700 data-[focus]:bg-gray-100 data-[focus]:outline-none"
-              >
-                Instillinger
-              </a>
-            </MenuItem> */}
             <MenuItem>
               <a
                 href="#"
