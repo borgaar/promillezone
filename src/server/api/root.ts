@@ -16,8 +16,8 @@ export const appRouter = createTRPCRouter({
   collective: collectiveRouter,
   chore: choreRouter,
   shoppingList: shoppingListRouter,
-  roomRouter: roomRouter,
-  weatherRouter: weatherRouter,
+  room: roomRouter,
+  weather: weatherRouter,
 });
 
 // export type definition of API
