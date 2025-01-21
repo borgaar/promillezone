@@ -53,7 +53,7 @@ export default class Roaf implements TrashProvider {
   logoUrl = undefined;
 
   async getAddressId(address: Address): Promise<string> {
-    const interpolated = `${address.streetName} ${address.houseNumber}`;
+    const interpolated = `${address.streetName} ${address.streetNumber}`;
     const response = await fetch(
       `https://services.webatlas.no/GISLINE.Web.Services.Search.SOLR3.0/Service.svc/json/addressWeighted?searchString=${interpolated}&municipality=${address.postalCode}&weightedMunicipality=${address.postalCode}&firstIndex=0&maxNoOfResults=20`,
     );
@@ -78,7 +78,7 @@ export default class Roaf implements TrashProvider {
     address: Address,
   ): Promise<TrashScheduleEntry[]> {
     const response = await fetch(
-      `https://norkartrenovasjon.azurewebsites.net/proxyserver.ashx?server=https://komteksky.norkart.no/MinRenovasjon.Api/api/tommekalender/?kommunenr=${address.postalCode}&gatenavn=${address.streetName}&gatekode=${addressId}&husnr=${address.houseNumber}`,
+      `https://norkartrenovasjon.azurewebsites.net/proxyserver.ashx?server=https://komteksky.norkart.no/MinRenovasjon.Api/api/tommekalender/?kommunenr=${address.postalCode}&gatenavn=${address.streetName}&gatekode=${addressId}&husnr=${address.streetNumber}`,
       {
         headers: {
           renovasjonappkey: renovationAppKey,

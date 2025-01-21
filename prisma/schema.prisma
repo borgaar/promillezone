@@ -62,11 +62,13 @@ model Collective {
     id                  String                @id @default(uuid())
     name                String
     streetName          String
-    houseNumber         String
+    streetNumber        String
+    streetLetter        String
     postalCode          String
+    postalCity          String
     trashAddressId      String?
     trashProviderSlug   String?
-    coordinates         String?
+    coordinates         String
     users               User[]
     JoinCollectiveToken JoinCollectiveToken[]
     Chore               Chore[]

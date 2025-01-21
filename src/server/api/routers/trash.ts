@@ -15,9 +15,10 @@ export const trashRouter = createTRPCRouter({
     const {
       trashAddressId,
       trashProviderSlug,
-      houseNumber,
       postalCode,
       streetName,
+      streetLetter,
+      streetNumber,
     } = await ctx.db.collective.findUniqueOrThrow({
       where: {
         id: ctx.session.user.collectiveId,
@@ -41,9 +42,10 @@ export const trashRouter = createTRPCRouter({
     }
 
     const schedule = await provider.getTrashSchedule(trashAddressId, {
-      houseNumber,
       postalCode,
       streetName,
+      streetLetter,
+      streetNumber,
     });
 
     schedule.sort(
@@ -73,8 +75,9 @@ export const trashRouter = createTRPCRouter({
         },
         select: {
           postalCode: true,
-          houseNumber: true,
           streetName: true,
+          streetLetter: true,
+          streetNumber: true,
         },
       });
 
