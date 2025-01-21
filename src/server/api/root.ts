@@ -4,6 +4,7 @@ import { collectiveRouter } from "./routers/collective";
 import { choreRouter } from "./routers/chore";
 import { shoppingListRouter } from "./routers/shoppinglist";
 import { roomRouter } from "./routers/room";
+import { weatherRouter } from "./routers/weather";
 
 /**
  * This is the primary router for your server.
@@ -15,7 +16,8 @@ export const appRouter = createTRPCRouter({
   collective: collectiveRouter,
   chore: choreRouter,
   shoppingList: shoppingListRouter,
-  roomRouter: roomRouter,
+  room: roomRouter,
+  weather: weatherRouter,
 });
 
 // export type definition of API

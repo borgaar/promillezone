@@ -9,28 +9,28 @@ import { Trash } from "lucide-react";
 
 export default function Bookings() {
   const utils = api.useUtils();
-  const { data: bookings } = api.roomRouter.getRoomBookings.useQuery();
-  const { mutateAsync: remove } = api.roomRouter.removeRoomBooking.useMutation({
+  const { data: bookings } = api.room.getRoomBookings.useQuery();
+  const { mutateAsync: remove } = api.room.removeRoomBooking.useMutation({
     onMutate: async (id) => {
       // Cancel any outgoing refetches
       // (so they don't overwrite our optimistic update)
-      await utils.roomRouter.getRoomBookings.cancel();
+      await utils.room.getRoomBookings.cancel();
 
-      const previous = utils.roomRouter.getRoomBookings.getData();
+      const previous = utils.room.getRoomBookings.getData();
 
       if (!previous) return;
 
       const updated = previous.filter((i) => i.id !== id);
 
-      utils.roomRouter.getRoomBookings.setData(undefined, updated);
+      utils.room.getRoomBookings.setData(undefined, updated);
 
       return { previous };
     },
     onError: (_error, _newItem, context) => {
-      utils.roomRouter.getRoomBookings.setData(undefined, context?.previous);
+      utils.room.getRoomBookings.setData(undefined, context?.previous);
     },
     onSettled: () => {
-      void utils.roomRouter.getRoomBookings.invalidate();
+      void utils.room.getRoomBookings.invalidate();
     },
   });
   const { data } = useSession();

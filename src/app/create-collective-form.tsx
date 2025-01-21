@@ -17,25 +17,31 @@ import {
 import { Input } from "@/components/ui/input";
 import { api } from "../trpc/react";
 import { useRouter } from "next/navigation";
+import {
+  type Address,
+  AddressSearchCombobox,
+} from "@/components/ui/address-search";
+
+const AddressSchema = z.object({
+  adressenavn: z.string().min(1, "Streetname is required"),
+  nummer: z.string().min(1, "Number is required"),
+  bokstav: z.string(),
+  poststed: z.string().min(1, "City is required"),
+  postnummer: z.string().length(4, "Postal code must be 4 digits"),
+  representasjonspunkt: z.object({
+    lat: z.number(),
+    lon: z.number(),
+  }),
+});
 
 const FormSchema = z.object({
   collectiveName: z
     .string()
     .min(1, "Minst 1 bokstav")
     .max(28, "For langt navn"),
-  streetName: z.string().min(1, "Må fylles ut"),
-  houseNumber: z
-    .string()
-    .min(1, "Må fylles ut")
-    .refine((value) => {
-      return !isNaN(Number(value));
-    }, "Må være et tall"),
-  postalCode: z
-    .string()
-    .length(4, "Må være 4 tegn")
-    .refine((value) => {
-      return !isNaN(Number(value));
-    }, "Må være et tall"),
+  address: AddressSchema.refine((val) => val.adressenavn !== "", {
+    message: "Hva er din adresse?",
+  }),
 });
 
 export default function CreateCollectiveForm() {
@@ -43,9 +49,17 @@ export default function CreateCollectiveForm() {
     resolver: zodResolver(FormSchema),
     defaultValues: {
       collectiveName: "",
-      streetName: "",
-      houseNumber: "",
-      postalCode: "",
+      address: {
+        adressenavn: "",
+        nummer: "",
+        bokstav: "",
+        postnummer: "",
+        poststed: "",
+        representasjonspunkt: {
+          lat: 0,
+          lon: 0,
+        },
+      },
     },
   });
 
@@ -55,7 +69,20 @@ export default function CreateCollectiveForm() {
   const router = useRouter();
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
-    await createCollective(data);
+    await createCollective({
+      collectiveName: data.collectiveName,
+      address: {
+        streetName: data.address.adressenavn,
+        streetNumber: data.address.nummer,
+        streetLetter: data.address.bokstav,
+        postalCity: data.address.poststed,
+        postalCode: data.address.postnummer,
+        coordinates: {
+          lat: data.address.representasjonspunkt.lat,
+          lon: data.address.representasjonspunkt.lon,
+        },
+      },
+    });
     router.refresh();
   }
 
@@ -89,46 +116,21 @@ export default function CreateCollectiveForm() {
         />
         <FormField
           control={form.control}
-          name="streetName"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Gatenavn</FormLabel>
-              <FormControl>
-                <Input {...field} />
+          name="address"
+          render={() => (
+            <FormItem className="flex w-full flex-col">
+              <FormLabel>Kollektivets adresse</FormLabel>
+              <FormControl className="w-full">
+                <AddressSearchCombobox
+                  onSelect={(address: Address) => {
+                    form.setValue("address", address);
+                  }}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        <div className="flex w-full justify-between space-x-4">
-          <FormField
-            control={form.control}
-            name="houseNumber"
-            render={({ field }) => (
-              <FormItem className="w-full">
-                <FormLabel>Husnummer</FormLabel>
-                <FormControl>
-                  <Input {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="postalCode"
-            render={({ field }) => (
-              <FormItem className="w-full">
-                <FormLabel>Postnummer</FormLabel>
-                <FormControl>
-                  <Input {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
         <Button type="submit" className="w-full">
           Opprett kollektiv
         </Button>

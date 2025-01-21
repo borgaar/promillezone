@@ -105,23 +105,44 @@ export const collectiveRouter = createTRPCRouter({
     .input(
       z.object({
         collectiveName: z.string().nonempty().max(32),
-        streetName: z.string().nonempty(),
-        houseNumber: z.string().nonempty(),
-        postalCode: z.string().nonempty(),
+        address: z.object({
+          streetName: z.string(),
+          streetLetter: z.string(),
+          streetNumber: z.string(),
+          postalCity: z.string(),
+          postalCode: z.string().length(4),
+          coordinates: z.object({
+            lat: z.number(),
+            lon: z.number(),
+          }),
+        }),
       }),
     )
     .mutation(
       async ({
         ctx,
-        input: { collectiveName, streetName, postalCode, houseNumber },
+        input: {
+          collectiveName,
+          address: {
+            postalCode,
+            postalCity,
+            streetName,
+            streetNumber,
+            streetLetter,
+            coordinates: { lat, lon },
+          },
+        },
       }) => {
         await ctx.db.$transaction(async (tx) => {
           const collective = await tx.collective.create({
             data: {
               name: collectiveName,
               postalCode: postalCode,
-              houseNumber: houseNumber,
+              postalCity: postalCity,
+              streetNumber: streetNumber,
+              streetLetter: streetLetter,
               streetName: streetName,
+              coordinates: lat.toString() + "," + lon.toString(),
             },
           });
           await tx.user.update({

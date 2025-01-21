@@ -52,7 +52,7 @@ export default class TRV implements TrashProvider {
   logoUrl = "/trash-provider/trv.png";
 
   async getAddressId(address: Address): Promise<string> {
-    const interpolated = `${address.streetName} ${address.houseNumber}`;
+    const interpolated = `${address.streetName} ${address.streetNumber}`;
 
     const response = await fetch(
       `https://trv.no/wp-json/wasteplan/v2/adress/?s=${interpolated}`,
@@ -71,10 +71,7 @@ export default class TRV implements TrashProvider {
     return data[0]!.id;
   }
 
-  async getTrashSchedule(
-    addressId: string,
-    address: Address,
-  ): Promise<TrashScheduleEntry[]> {
+  async getTrashSchedule(addressId: string): Promise<TrashScheduleEntry[]> {
     const response = await fetch(
       `https://trv.no/wp-json/wasteplan/v2/calendar/${addressId}`,
     );

@@ -17,7 +17,7 @@ import { api } from "../../../trpc/react";
 import { useState } from "react";
 
 export default function PickDateDialog() {
-  const { mutateAsync: book } = api.roomRouter.createRoomBooking.useMutation();
+  const { mutateAsync: book } = api.room.createRoomBooking.useMutation();
 
   const [date, setDate] = React.useState<Date | undefined>(new Date());
   const [open, setOpen] = useState(false);
