@@ -18,12 +18,7 @@ export default function ErikTile() {
       </CardHeader>
       <CardContent className="flex h-[60%] w-full flex-col items-center justify-center">
         <div className="text-5xl font-bold">
-          <span>Om</span>
-          <span className="text-7xl font-black">
-            {" "}
-            {differenceInDays(date, new Date()) + 1}{" "}
-          </span>
-          <span>dager</span>
+          <span>Erik er her!</span>
         </div>
         <div>{formatDate(date, "EEEE dd.MM.yyyy", { locale: nb })}</div>
       </CardContent>
