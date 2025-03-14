@@ -28,9 +28,7 @@ export const busRouter = createTRPCRouter({
     const busStops = await getBusStops(ctx);
     const busStopIds = busStops.map((busStop) => busStop.id);
 
-    const busDepartures: BusDeparture[] = queryBusDepartures(busStopIds);
-
-    return;
+    return queryBusDepartures(busStopIds);
   }),
 });
 
