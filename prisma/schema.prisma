@@ -74,6 +74,7 @@ model Collective {
     Chore               Chore[]
     ShoppingListItem    ShoppingListItem[]
     RoomBooking         RoomBooking[]
+    CollectiveBusStop   CollectiveBusStop[]
 }
 
 model JoinCollectiveToken {
@@ -137,4 +138,21 @@ model VerificationToken {
     expires    DateTime
 
     @@unique([identifier, token])
+}
+
+model BusStop {
+    id                String              @id
+    coordinates       String
+    name              String
+    CollectiveBusStop CollectiveBusStop[]
+}
+
+model CollectiveBusStop {
+    collective   Collective @relation(fields: [collectiveId], references: [id], onDelete: Cascade)
+    collectiveId String
+    busStop      BusStop    @relation(fields: [busStopId], references: [id], onDelete: Cascade)
+    busStopId    String
+
+    @@id([collectiveId, busStopId])
+    @@unique([collectiveId, busStopId])
 }
