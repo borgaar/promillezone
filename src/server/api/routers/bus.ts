@@ -6,6 +6,9 @@ import { gql, request } from "graphql-request";
 interface Departure {
   code: string;
   name: string;
+  realtime: boolean;
+  aimedArrivalTime: Date;
+  expectedArrivalTime: Date;
 }
 
 interface BusStop {
@@ -25,7 +28,9 @@ export const busRouter = createTRPCRouter({
     const busStops = await getBusStops(ctx);
     const busStopIds = busStops.map((busStop) => busStop.id);
 
-    return busStops;
+    const busDepartures: BusDeparture[] = queryBusDepartures(busStopIds);
+
+    return;
   }),
 });
 
@@ -136,5 +141,78 @@ async function queryClosestBusStops(
     id: edge.node.place.id,
     latitude: edge.node.place.latitude,
     longitude: edge.node.place.longitude,
+  }));
+}
+
+async function queryBusDepartures(ids: string[]): Promise<BusDeparture[]> {
+  const document = gql`
+  {
+    stopPlaces(ids: [${ids.map((id) => `"${id}"`).join(",")}]) {
+      id
+      name
+      latitude
+      longitude
+      estimatedCalls(timeRange: 7200, numberOfDepartures: 5) {
+        realtime
+        aimedArrivalTime
+        expectedArrivalTime
+        destinationDisplay {
+          frontText
+        }
+        serviceJourney {
+          line {
+            publicCode
+          }
+        }
+      }
+    }
+  }`;
+  interface Data {
+    stopPlaces: StopPlace[];
+  }
+
+  interface StopPlace {
+    id: string;
+    name: string;
+    latitude: number;
+    longitude: number;
+    estimatedCalls: EstimatedCall[];
+  }
+
+  interface EstimatedCall {
+    realtime: boolean;
+    aimedArrivalTime: Date;
+    expectedArrivalTime: Date;
+    destinationDisplay: DestinationDisplay;
+    serviceJourney: ServiceJourney;
+  }
+
+  interface DestinationDisplay {
+    frontText: string;
+  }
+
+  interface ServiceJourney {
+    line: Line;
+  }
+
+  interface Line {
+    publicCode: string;
+  }
+
+  const url = "https://api.entur.io/journey-planner/v3/graphql";
+  const data: Data = await request(url, document);
+
+  return data.stopPlaces.map((stopPlace) => ({
+    name: stopPlace.name,
+    id: stopPlace.id,
+    latitude: stopPlace.latitude,
+    longitude: stopPlace.longitude,
+    departures: stopPlace.estimatedCalls.map((call) => ({
+      code: call.serviceJourney.line.publicCode,
+      name: call.destinationDisplay.frontText,
+      realtime: call.realtime,
+      aimedArrivalTime: call.aimedArrivalTime,
+      expectedArrivalTime: call.expectedArrivalTime,
+    })),
   }));
 }
