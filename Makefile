@@ -11,7 +11,9 @@ db:
 	- sleep 2
 	- pnpx prisma migrate dev
 
+.PHONY: prod
 prod:
-	- docker compose --profile production -f docker-compose.yml down
-	- docker image rm ghcr.io/borgaar/promillezone:latest
-	- docker compose --profile production -f docker-compose.yml up -d
+	docker build -t promille.zone .
+	- docker rm -f promille.zone
+	- prisma migrate deploy
+	docker run --env-file .env -p 2808:3000 --name promille.zone --restart unless-stopped -d promille.zone
