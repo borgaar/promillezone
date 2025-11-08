@@ -1,0 +1,16 @@
+services:
+  database:
+    image: postgres:latest
+    container_name: promillezone-database
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_USER: postgres
+      POSTGRES_DB: promillezone
+    volumes:
+      - db-data:/var/lib/postgresql
+    ports:
+      - "127.0.0.1:5432:5432"
+
+volumes:
+  db-data:
