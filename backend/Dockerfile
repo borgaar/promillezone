@@ -6,6 +6,8 @@ WORKDIR /build
 
 COPY . .
 
+RUN apt update && apt-get install -y libpq-dev
+
 RUN cargo build --release
 
 FROM base AS runner
