@@ -10,7 +10,19 @@ services:
     volumes:
       - db-data:/var/lib/postgresql
     ports:
-      - "127.0.0.1:5432:5432"
+      - "5432:5432"
+
+  api:
+    build: .
+    container_name: promillezone-api
+    restart: always
+    depends_on:
+      - database
+    environment:
+      DATABASE_URL: postgres://postgres:password@database:5432/promillezone
+      JWT_SECRET: TopSecretKey
+    ports:
+      - "3000:3000"
 
 volumes:
   db-data:
