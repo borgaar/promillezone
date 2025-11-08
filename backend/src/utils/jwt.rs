@@ -3,6 +3,8 @@ use serde::{Deserialize, Serialize};
 use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
 
+use crate::JWT_SECRET;
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Claims {
     pub sub: String,
@@ -29,21 +31,18 @@ impl Claims {
 
 pub fn create_token(user_id: Uuid, email: String) -> Result<String, jsonwebtoken::errors::Error> {
     let claims = Claims::new(user_id, email, 24); // 24 hours
-    let secret = std::env::var("JWT_SECRET").expect("JWT_SECRET must be set");
 
     encode(
         &Header::default(),
         &claims,
-        &EncodingKey::from_secret(secret.as_bytes()),
+        &EncodingKey::from_secret(JWT_SECRET.as_bytes()),
     )
 }
 
 pub fn verify_token(token: &str) -> Result<Claims, jsonwebtoken::errors::Error> {
-    let secret = std::env::var("JWT_SECRET").expect("JWT_SECRET must be set");
-
     let token_data = decode::<Claims>(
         token,
-        &DecodingKey::from_secret(secret.as_bytes()),
+        &DecodingKey::from_secret(JWT_SECRET.as_bytes()),
         &Validation::default(),
     )?;
 

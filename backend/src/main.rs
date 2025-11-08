@@ -15,6 +15,10 @@ use diesel_async::{
 use std::net::SocketAddr;
 use tower_http::cors::CorsLayer;
 
+lazy_static::lazy_static! {
+    pub static ref JWT_SECRET: String = std::env::var("JWT_SECRET").expect("JWT_SECRET must be set");
+}
+
 #[derive(Clone)]
 pub struct AppState {
     pub pool: Pool<AsyncPgConnection>,
