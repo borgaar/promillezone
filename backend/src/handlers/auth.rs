@@ -4,6 +4,7 @@ use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+use validator::Validate;
 
 use crate::{
     AppState,
@@ -12,14 +13,17 @@ use crate::{
     utils::jwt::{Claims, create_token},
 };
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Validate, Deserialize)]
 pub struct RegisterRequest {
+    #[validate(email)]
     pub email: String,
+    #[validate(length(min = 8))]
     pub password: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Validate, Deserialize)]
 pub struct LoginRequest {
+    #[validate(email)]
     pub email: String,
     pub password: String,
 }
@@ -39,6 +43,14 @@ pub async fn register(
     State(state): State<AppState>,
     Json(payload): Json<RegisterRequest>,
 ) -> Result<Json<AuthResponse>, (StatusCode, Json<serde_json::Value>)> {
+    payload.validate().map_err(|e| {
+        eprintln!("Validation error: {}", e);
+        (
+            StatusCode::BAD_REQUEST,
+            Json(serde_json::json!({"error": "Invalid request"})),
+        )
+    })?;
+
     let mut conn = state.pool.get().await.map_err(|e| {
         eprintln!("Failed to get database connection: {}", e);
         (
@@ -115,6 +127,14 @@ pub async fn login(
     State(state): State<AppState>,
     Json(payload): Json<LoginRequest>,
 ) -> Result<Json<AuthResponse>, (StatusCode, Json<serde_json::Value>)> {
+    payload.validate().map_err(|e| {
+        eprintln!("Validation error: {}", e);
+        (
+            StatusCode::BAD_REQUEST,
+            Json(serde_json::json!({"error": "Invalid request"})),
+        )
+    })?;
+
     let mut conn = state.pool.get().await.map_err(|_| {
         (
             StatusCode::INTERNAL_SERVER_ERROR,
