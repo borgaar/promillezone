@@ -1,1 +1,1 @@
-pub mod jwt;
+pub mod firebase_auth;
