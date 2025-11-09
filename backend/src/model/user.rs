@@ -8,7 +8,7 @@ use utoipa::ToSchema;
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct User {
     pub id: String,
-    pub email: String,
+    pub email: Option<String>,
     #[schema(value_type = String, format = DateTime)]
     pub created_at: NaiveDateTime,
     #[serde(skip_serializing)]
@@ -20,5 +20,5 @@ pub struct User {
 #[diesel(table_name = crate::schema::users)]
 pub struct NewUser {
     pub id: String,
-    pub email: String,
+    pub email: Option<String>,
 }

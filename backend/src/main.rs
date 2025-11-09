@@ -15,42 +15,39 @@ use std::{net::SocketAddr, sync::Arc};
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use utoipa::OpenApi;
+use utoipa::openapi::security::{HttpAuthScheme, HttpBuilder, SecurityScheme};
 use utoipa_scalar::{Scalar, Servable};
 
 use crate::utils::firebase_auth::FirebaseAuth;
 
 #[derive(OpenApi)]
 #[openapi(
+    info(
+        title = "Promillezone API",
+        version = "0.1.0",
+        description = "API for the Promillezone application",
+        contact(
+            name = "API Support",
+        ),
+    ),
     paths(
         handlers::user::get_profile,
         handlers::user::create_profile,
     ),
     components(
-        schemas(model::user::User, model::user::NewUser)
+        schemas(
+            model::user::User,
+            model::error::ErrorResponse,
+        )
     ),
     tags(
         (name = "user", description = "User management endpoints")
     ),
-    modifiers(&SecurityAddon)
+    security(
+        ("bearerAuth" = [])
+    )
 )]
 struct ApiDoc;
-
-struct SecurityAddon;
-
-impl utoipa::Modify for SecurityAddon {
-    fn modify(&self, openapi: &mut utoipa::openapi::OpenApi) {
-        if let Some(components) = openapi.components.as_mut() {
-            components.add_security_scheme(
-                "bearerAuth",
-                utoipa::openapi::security::SecurityScheme::Http(
-                    utoipa::openapi::security::Http::new(
-                        utoipa::openapi::security::HttpAuthScheme::Bearer,
-                    ),
-                ),
-            )
-        }
-    }
-}
 
 #[derive(Clone)]
 pub struct AppState {
@@ -89,24 +86,34 @@ async fn main() {
         firebase_auth,
     };
 
+    // Protected routes
+    let protected = Router::new()
+        .route("/api/auth/profile", get(handlers::user::get_profile))
+        .route("/api/auth/profile", post(handlers::user::create_profile))
+        .route_layer(axum_middleware::from_fn_with_state(
+            state.clone(),
+            utils::firebase_auth::auth_middleware,
+        ));
+
+    // Build OpenAPI spec with security scheme
+    let mut openapi = ApiDoc::openapi();
+    openapi.components.as_mut().map(|components| {
+        components.add_security_scheme(
+            "bearerAuth",
+            SecurityScheme::Http(
+                HttpBuilder::new()
+                    .scheme(HttpAuthScheme::Bearer)
+                    .bearer_format("JWT")
+                    .build(),
+            ),
+        )
+    });
+
     let app = Router::new()
-        .route(
-            "/api/auth/profile",
-            get(handlers::user::get_profile).route_layer(axum_middleware::from_fn_with_state(
-                state.clone(),
-                utils::firebase_auth::auth_middleware,
-            )),
-        )
-        .route(
-            "/api/auth/profile",
-            post(handlers::user::create_profile).route_layer(axum_middleware::from_fn_with_state(
-                state.clone(),
-                utils::firebase_auth::auth_middleware,
-            )),
-        )
+        .merge(protected)
         .layer(TraceLayer::new_for_http())
         .layer(CorsLayer::permissive())
-        .merge(Scalar::with_url("/scalar", ApiDoc::openapi()))
+        .merge(Scalar::with_url("/scalar", openapi))
         .with_state(state);
 
     let addr = SocketAddr::from(([0, 0, 0, 0], 3000));

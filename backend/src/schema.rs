@@ -3,7 +3,7 @@
 diesel::table! {
     users (id) {
         id -> Varchar,
-        email -> Varchar,
+        email -> Nullable<Varchar>,
         created_at -> Timestamp,
         updated_at -> Timestamp,
     }

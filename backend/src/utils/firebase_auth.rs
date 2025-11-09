@@ -41,7 +41,8 @@ pub struct Claims {
     // Firebase-specific claims
     pub user_id: String,       // Same as sub
     
-    pub email: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub email: Option<String>,
     
     #[serde(skip_serializing_if = "Option::is_none")]
     pub email_verified: Option<bool>,
@@ -91,6 +92,7 @@ impl FirebaseAuth {
     }
 
     pub async fn get_keys(&self) -> Result<HashMap<String, DecodingKey>, String> {
+        // Check if cache is valid first
         {
             let cache = self.cache.read().await;
             if let Some(ref keys) = cache.keys {
@@ -103,6 +105,7 @@ impl FirebaseAuth {
 
         tracing::info!("Fetching fresh Firebase public keys");
 
+        // Acquire write lock to update cache
         let mut cache = self.cache.write().await;
 
         // Double-check in case another task already updated it
@@ -113,6 +116,7 @@ impl FirebaseAuth {
             }
         }
 
+        // Fetch keys from Firebase
         let resp = reqwest::get(&self.firebase_key_url)
             .await
             .map_err(|e| {
@@ -120,6 +124,7 @@ impl FirebaseAuth {
                 format!("Failed to fetch Firebase keys: {}", e)
             })?;
 
+        // Determine cache duration from response headers   
         let cache_duration = resp
             .headers()
             .get("cache-control")
@@ -134,6 +139,7 @@ impl FirebaseAuth {
 
         tracing::debug!("Firebase keys cache duration: {}s", cache_duration);
 
+        // Parse the response JSON
         let keys_response: FirebaseKeysResponse = resp
             .json()
             .await
@@ -142,6 +148,7 @@ impl FirebaseAuth {
                 format!("Failed to parse Firebase keys response: {}", e)
             })?;
 
+        // Convert to DecodingKey map
         let mut decoding_keys = HashMap::new();
         for (kid, key_str) in keys_response.keys {
             let decoding_key = DecodingKey::from_rsa_pem(key_str.as_bytes())
@@ -154,6 +161,7 @@ impl FirebaseAuth {
 
         tracing::info!("Successfully fetched and cached {} Firebase public keys", decoding_keys.len());
 
+        // Update cache
         cache.keys = Some(decoding_keys.clone());
         cache.expiry = SystemTime::now() + std::time::Duration::from_secs(cache_duration);
 
@@ -167,73 +175,45 @@ impl Default for FirebaseAuth {
     }
 }
 
+fn unauthorized(reason: &str) -> Response {
+    tracing::warn!("Authentication failed: {}", reason);
+    (StatusCode::UNAUTHORIZED, Json(json!({"error": "Unauthorized"}))).into_response()
+}
+
 pub async fn auth_middleware(
     State(state): State<crate::AppState>,
     mut req: Request,
     next: Next,
 ) -> Response {
-    let auth_header = req
+    // Extract JWT from header
+    let Some(token) = req
         .headers()
         .get(header::AUTHORIZATION)
-        .and_then(|header| header.to_str().ok());
-
-    let token = match auth_header {
-        Some(header) if header.starts_with("Bearer ") => {
-            header.trim_start_matches("Bearer ")
-        }
-        _ => {
-            tracing::warn!("Authentication failed: missing or invalid authorization header");
-            return (
-                StatusCode::UNAUTHORIZED,
-                Json(json!({ "error": "Unauthorized" }))
-            ).into_response();
-        }
+        .and_then(|h| h.to_str().ok())
+        .and_then(|h| h.strip_prefix("Bearer "))
+    else {
+        return unauthorized("missing or invalid authorization header");
     };
 
-    let keys = match state.firebase_auth.get_keys().await {
-        Ok(keys) => keys,
-        Err(e) => {
-            tracing::error!("Failed to get Firebase keys: {}", e);
-            return (
-                StatusCode::UNAUTHORIZED,
-                Json(json!({ "error": "Unauthorized" }))
-            ).into_response();
-        }
+    // Get Firebase signing keys
+    let Ok(keys) = state.firebase_auth.get_keys().await else {
+        return unauthorized("failed to verify token");
     };
 
-    let header = match jsonwebtoken::decode_header(token) {
-        Ok(h) => h,
-        Err(_) => {
-            tracing::warn!("Authentication failed: invalid token format");
-            return (
-                StatusCode::UNAUTHORIZED,
-                Json(json!({ "error": "Unauthorized" }))
-            ).into_response();
-        }
+    // Decode token header and get key ID used for signing
+    let Ok(header) = jsonwebtoken::decode_header(token) else {
+        return unauthorized("invalid token format");
     };
     
-    let kid = match header.kid {
-        Some(k) => k,
-        None => {
-            tracing::warn!("Authentication failed: token missing key ID");
-            return (
-                StatusCode::UNAUTHORIZED,
-                Json(json!({ "error": "Unauthorized" }))
-            ).into_response();
-        }
+    let Some(kid) = header.kid else {
+        return unauthorized("token missing key ID");
+    };
+    
+    let Some(decoding_key) = keys.get(&kid) else {
+        return unauthorized("unknown key ID");
     };
 
-    let decoding_key = match keys.get(&kid) {
-        Some(key) => key,
-        None => {
-            tracing::warn!("Authentication failed: unknown key ID");
-            return (
-                StatusCode::UNAUTHORIZED,
-                Json(json!({ "error": "Unauthorized" }))
-            ).into_response();
-        }
-    };
-
+    // Validate token claims
     let mut validation = Validation::new(Algorithm::RS256);
     validation.set_audience(&[&state.firebase_auth.project_id]);
     validation.set_issuer(&[format!("https://securetoken.google.com/{}", state.firebase_auth.project_id)]);
@@ -241,29 +221,16 @@ pub async fn auth_middleware(
     validation.validate_nbf = false;
     validation.leeway = 60;
 
-    let token_data = match jsonwebtoken::decode::<Claims>(token, decoding_key, &validation) {
-        Ok(data) => data,
-        Err(e) => {
-            tracing::warn!("Authentication failed: token validation error - {:?}", e.kind());
-            return (
-                StatusCode::UNAUTHORIZED,
-                Json(json!({ "error": "Unauthorized" }))
-            ).into_response();
-        }
+    let Ok(token_data) = jsonwebtoken::decode::<Claims>(token, decoding_key, &validation) else {
+        return unauthorized("invalid token");
     };
 
     if token_data.claims.sub.is_empty() {
-        tracing::warn!("Authentication failed: empty subject claim");
-        return (
-            StatusCode::UNAUTHORIZED,
-            Json(json!({ "error": "Unauthorized" }))
-        ).into_response();
+        return unauthorized("empty subject claim");
     }
 
-    tracing::debug!("User authenticated successfully");
-    
+    // Insert claims into request extensions for downstream handlers
     req.extensions_mut().insert(token_data.claims);
-    
     next.run(req).await
 }
 
