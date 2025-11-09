@@ -15,39 +15,9 @@ use std::{net::SocketAddr, sync::Arc};
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use utoipa::OpenApi;
-use utoipa::openapi::security::{HttpAuthScheme, HttpBuilder, SecurityScheme};
 use utoipa_scalar::{Scalar, Servable};
 
-use crate::utils::firebase_auth::FirebaseAuth;
-
-#[derive(OpenApi)]
-#[openapi(
-    info(
-        title = "Promillezone API",
-        version = "0.1.0",
-        description = "API for the Promillezone application",
-        contact(
-            name = "API Support",
-        ),
-    ),
-    paths(
-        handlers::user::get_profile,
-        handlers::user::create_profile,
-    ),
-    components(
-        schemas(
-            model::user::User,
-            model::error::ErrorResponse,
-        )
-    ),
-    tags(
-        (name = "user", description = "User management endpoints")
-    ),
-    security(
-        ("bearerAuth" = [])
-    )
-)]
-struct ApiDoc;
+use crate::utils::{firebase_auth::FirebaseAuth, openapi::ApiDoc};
 
 #[derive(Clone)]
 pub struct AppState {
@@ -95,19 +65,8 @@ async fn main() {
             utils::firebase_auth::auth_middleware,
         ));
 
-    // Build OpenAPI spec with security scheme
-    let mut openapi = ApiDoc::openapi();
-    openapi.components.as_mut().map(|components| {
-        components.add_security_scheme(
-            "bearerAuth",
-            SecurityScheme::Http(
-                HttpBuilder::new()
-                    .scheme(HttpAuthScheme::Bearer)
-                    .bearer_format("JWT")
-                    .build(),
-            ),
-        )
-    });
+    // Build OpenAPI spec
+    let openapi = ApiDoc::openapi();
 
     let app = Router::new()
         .merge(protected)

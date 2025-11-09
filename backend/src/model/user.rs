@@ -9,10 +9,10 @@ use utoipa::ToSchema;
 pub struct User {
     pub id: String,
     pub email: Option<String>,
-    #[schema(value_type = String, format = DateTime)]
+    #[schema(value_type = String, format = "date-time")]
     pub created_at: NaiveDateTime,
     #[serde(skip_serializing)]
-    #[schema(value_type = String, format = DateTime)]
+    #[schema(value_type = String, format = "date-time")]
     #[allow(dead_code)]
     pub updated_at: NaiveDateTime,
 }
