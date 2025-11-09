@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "559207171465",
+    "project_id": "promillezone-v2",
+    "storage_bucket": "promillezone-v2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:559207171465:android:3ac7cf5115fd78958b0d58",
+        "android_client_info": {
+          "package_name": "com.example.promillezone"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDu9BdZ_24ooHX-KAS8WMdCWzvGUTWzmOo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
