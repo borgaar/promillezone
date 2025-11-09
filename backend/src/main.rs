@@ -121,7 +121,7 @@ async fn main() {
 
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
 
-    // Graceful shutdown handler
+    // Serve with graceful shutdown
     axum::serve(listener, app)
         .with_graceful_shutdown(shutdown_signal())
         .await
@@ -133,12 +133,14 @@ async fn main() {
 async fn shutdown_signal() {
     use tokio::signal;
 
+    // Wait for the CTRL+C signal
     let ctrl_c = async {
         signal::ctrl_c()
             .await
             .expect("Failed to install Ctrl+C handler");
     };
 
+    // Wait for SIGTERM signal on Unix systems
     #[cfg(unix)]
     let terminate = async {
         signal::unix::signal(signal::unix::SignalKind::terminate())
@@ -147,6 +149,7 @@ async fn shutdown_signal() {
             .await;
     };
 
+    // On non-Unix systems, just await forever
     #[cfg(not(unix))]
     let terminate = std::future::pending::<()>();
 
