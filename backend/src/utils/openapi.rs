@@ -1,6 +1,5 @@
 use utoipa::OpenApi;
 
-use crate::entity;
 use crate::handlers;
 use crate::model;
 
@@ -21,8 +20,8 @@ use crate::model;
     ),
     components(
         schemas(
-            entity::profiles::Model,
-            entity::households::Model,
+            model::api::response::ProfileResponse,
+            model::api::response::HouseholdResponse,
             model::api::profile::CreateProfileRequest,
             model::api::household::CreateHouseholdRequest,
             model::api::error::ErrorResponse,

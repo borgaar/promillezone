@@ -5,6 +5,7 @@ use crate::{
     AppState,
     entity::{households, profiles},
     model,
+    model::api::response::HouseholdResponse,
     utils::firebase_auth::Claims,
 };
 
@@ -14,7 +15,7 @@ use crate::{
     tag = "household",
     description = "Create a new household",
     responses(
-        (status = 200, description = "Household created successfully", body = households::Model),
+        (status = 200, description = "Household created successfully", body = HouseholdResponse),
         (status = 401, description = "Unauthorized - Invalid or missing authentication token", body = model::api::error::UnauthorizedError),
         (status = 409, description = "User is already in a household", body = model::api::error::UserAlreadyInHouseholdError),
         (status = 500, description = "Internal server error", body = model::api::error::InternalServerError),
@@ -28,7 +29,7 @@ pub async fn create_household(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<model::api::household::CreateHouseholdRequest>,
-) -> Result<Json<households::Model>, Response> {
+) -> Result<Json<HouseholdResponse>, Response> {
     let user_id = claims.user_id.clone();
 
     let txn = state.db.begin().await.map_err(|e| {
@@ -85,5 +86,5 @@ pub async fn create_household(
         model::api::error::ErrorResponse::internal_server_error()
     })?;
 
-    Ok(Json(household))
+    Ok(Json(household.into()))
 }

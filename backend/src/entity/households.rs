@@ -2,19 +2,14 @@
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, ToSchema)]
+#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize)]
 #[sea_orm(table_name = "households")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
-    #[schema(value_type = String)]
     pub id: Uuid,
     pub name: String,
-    #[schema(value_type = String, format = "date-time")]
     pub created_at: DateTimeWithTimeZone,
-    #[serde(skip_serializing)]
-    #[schema(value_type = String, format = "date-time")]
     pub updated_at: DateTimeWithTimeZone,
 }
 

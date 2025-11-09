@@ -3,6 +3,7 @@ use sea_orm::{ActiveModelTrait, EntityTrait, Set};
 
 use crate::entity::profiles::{self, Entity as Profile};
 use crate::model;
+use crate::model::api::response::ProfileResponse;
 use crate::{AppState, utils::firebase_auth::Claims};
 
 #[utoipa::path(
@@ -11,7 +12,7 @@ use crate::{AppState, utils::firebase_auth::Claims};
     tag = "profile",
     description = "Get the profile of the authenticated user",
     responses(
-        (status = 200, description = "User profile retrieved successfully", body = profiles::Model),
+        (status = 200, description = "User profile retrieved successfully", body = ProfileResponse),
         (status = 404, description = "The profile was not found. Have you remembered to create it first?", body = model::api::error::NotFoundError),
         (status = 401, description = "Unauthorized - Invalid or missing authentication token", body = model::api::error::UnauthorizedError),
         (status = 500, description = "Internal server error", body = model::api::error::InternalServerError),
@@ -23,7 +24,7 @@ use crate::{AppState, utils::firebase_auth::Claims};
 pub async fn get_profile(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Result<Json<profiles::Model>, Response> {
+) -> Result<Json<ProfileResponse>, Response> {
     // Query the database for the user's profile
     let profile = Profile::find_by_id(claims.user_id.clone())
         .one(&state.db)
@@ -34,7 +35,7 @@ pub async fn get_profile(
         })?;
 
     match profile {
-        Some(user) => Ok(Json(user)),
+        Some(user) => Ok(Json(user.into())),
         None => Err(model::api::error::ErrorResponse::not_found(Some(
             "Profile not found",
         ))),
@@ -47,7 +48,7 @@ pub async fn get_profile(
     tag = "profile",
     description = "Create a profile for the authenticated user",
     responses(
-        (status = 200, description = "User profile created successfully", body = profiles::Model),
+        (status = 200, description = "User profile created successfully", body = ProfileResponse),
         (status = 400, description = "Email was not provided in token claims", body = model::api::error::BadRequestError),
         (status = 401, description = "Unauthorized - Invalid or missing authentication token", body = model::api::error::UnauthorizedError),
         (status = 409, description = "Profile already exists", body = model::api::error::ConflictError),
@@ -62,7 +63,7 @@ pub async fn create_profile(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<model::api::profile::CreateProfileRequest>,
-) -> Result<Json<profiles::Model>, Response> {
+) -> Result<Json<ProfileResponse>, Response> {
     // Check if profile already exists
     let exists = Profile::find_by_id(claims.user_id.clone())
         .one(&state.db)
@@ -98,5 +99,5 @@ pub async fn create_profile(
         model::api::error::ErrorResponse::internal_server_error()
     })?;
 
-    Ok(Json(profile))
+    Ok(Json(profile.into()))
 }
