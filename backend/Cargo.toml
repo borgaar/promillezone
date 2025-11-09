@@ -6,8 +6,13 @@ edition = "2024"
 [dependencies]
 axum = "0.8.6"
 chrono = { version = "0.4.42", features = ["serde"] }
-diesel = { version = "2.3.3", features = ["chrono", "postgres", "uuid"] }
-diesel-async = { version = "0.7.4", features = ["postgres", "deadpool"] }
+sea-orm = { version = "1.1.0", features = [
+  "sqlx-postgres",
+  "runtime-tokio-native-tls",
+  "macros",
+  "with-chrono",
+  "with-uuid",
+] }
 dotenvy = "0.15.7"
 jsonwebtoken = { version = "10.2.0", features = ["rust_crypto"] }
 reqwest = { version = "0.12.24", features = ["json"] }
