@@ -6,7 +6,7 @@ edition = "2024"
 [dependencies]
 axum = "0.8.6"
 chrono = { version = "0.4.42", features = ["serde"] }
-diesel = { version = "2.3.3", features = ["chrono", "postgres"] }
+diesel = { version = "2.3.3", features = ["chrono", "postgres", "uuid"] }
 diesel-async = { version = "0.7.4", features = ["postgres", "deadpool"] }
 dotenvy = "0.15.7"
 jsonwebtoken = { version = "10.2.0", features = ["rust_crypto"] }
@@ -23,3 +23,4 @@ tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.20", features = ["env-filter"] }
 utoipa = { version = "5.4.0", features = ["axum_extras"] }
 utoipa-scalar = { version = "0.3.0", features = ["axum"] }
+uuid = { version = "1.18.1", features = ["serde", "v4"] }

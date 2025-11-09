@@ -58,8 +58,12 @@ async fn main() {
 
     // Protected routes
     let protected = Router::new()
-        .route("/api/auth/profile", get(handlers::user::get_profile))
-        .route("/api/auth/profile", post(handlers::user::create_profile))
+        .route("/api/auth/profile", get(handlers::profile::get_profile))
+        .route("/api/auth/profile", post(handlers::profile::create_profile))
+        .route(
+            "/api/household",
+            post(handlers::household::create_household),
+        )
         .route_layer(axum_middleware::from_fn_with_state(
             state.clone(),
             utils::firebase_auth::auth_middleware,

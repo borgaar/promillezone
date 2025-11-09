@@ -1,15 +1,15 @@
 use axum::{
     extract::{Request, State},
-    http::{StatusCode, header},
+    http::{header},
     middleware::Next,
-    response::{IntoResponse, Response},
-    Json,
+    response::{Response},
 };
 use jsonwebtoken::{DecodingKey, Validation, Algorithm};
 use serde::{Deserialize, Serialize};
-use serde_json::json;
 use std::{collections::HashMap, time::SystemTime};
 use tokio::sync::RwLock;
+
+use crate::model;
 
 pub struct FirebaseAuth {
     firebase_key_url: String,
@@ -175,11 +175,6 @@ impl Default for FirebaseAuth {
     }
 }
 
-fn unauthorized(reason: &str) -> Response {
-    tracing::warn!("Authentication failed: {}", reason);
-    (StatusCode::UNAUTHORIZED, Json(json!({"error": "Unauthorized"}))).into_response()
-}
-
 pub async fn auth_middleware(
     State(state): State<crate::AppState>,
     mut req: Request,
@@ -192,25 +187,29 @@ pub async fn auth_middleware(
         .and_then(|h| h.to_str().ok())
         .and_then(|h| h.strip_prefix("Bearer "))
     else {
-        return unauthorized("missing or invalid authorization header");
+        return model::api::error::ErrorResponse::unauthorized();
     };
 
     // Get Firebase signing keys
     let Ok(keys) = state.firebase_auth.get_keys().await else {
-        return unauthorized("failed to verify token");
+        tracing::error!("Failed to get Firebase Auth signing keys");
+        return model::api::error::ErrorResponse::internal_server_error();
     };
 
     // Decode token header and get key ID used for signing
     let Ok(header) = jsonwebtoken::decode_header(token) else {
-        return unauthorized("invalid token format");
+        tracing::error!("Failed to decode JWT header");
+        return model::api::error::ErrorResponse::unauthorized();
     };
     
     let Some(kid) = header.kid else {
-        return unauthorized("token missing key ID");
+        tracing::error!("JWT header missing key ID (kid)");
+        return model::api::error::ErrorResponse::unauthorized();
     };
     
     let Some(decoding_key) = keys.get(&kid) else {
-        return unauthorized("unknown key ID");
+        tracing::error!("No matching Firebase public key found for kid: {}", kid);
+        return model::api::error::ErrorResponse::unauthorized();
     };
 
     // Validate token claims
@@ -221,12 +220,17 @@ pub async fn auth_middleware(
     validation.validate_nbf = false;
     validation.leeway = 60;
 
-    let Ok(token_data) = jsonwebtoken::decode::<Claims>(token, decoding_key, &validation) else {
-        return unauthorized("invalid token");
+    let token_data = match jsonwebtoken::decode::<Claims>(token, decoding_key, &validation) {
+        Ok(data) => data,
+        Err(e) => {
+            tracing::error!("Failed to validate JWT: {}", e);
+            return model::api::error::ErrorResponse::unauthorized();
+        }
     };
 
     if token_data.claims.sub.is_empty() {
-        return unauthorized("empty subject claim");
+        tracing::error!("JWT subject (sub) claim is empty");
+        return model::api::error::ErrorResponse::unauthorized();
     }
 
     // Insert claims into request extensions for downstream handlers

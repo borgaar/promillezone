@@ -14,18 +14,23 @@ use crate::model;
         ),
     ),
     paths(
-        handlers::user::get_profile,
-        handlers::user::create_profile,
+        handlers::profile::get_profile,
+        handlers::profile::create_profile,
+        handlers::household::create_household,
     ),
     components(
         schemas(
-            model::user::User,
-            model::error::ErrorResponse,
+            model::api::error::ErrorResponse,
+            model::api::error::UnauthorizedError,
+            model::api::error::NotFoundError,
+            model::api::error::BadRequestError,
+            model::api::error::ConflictError,
+            model::api::error::InternalServerError,
         )
     ),
     modifiers(&SecurityAddon),
     tags(
-        (name = "user", description = "User management endpoints")
+        (name = "Profile", description = "Profile management endpoints")
     )
 )]
 pub struct ApiDoc;
@@ -35,6 +40,7 @@ struct SecurityAddon;
 impl utoipa::Modify for SecurityAddon {
     fn modify(&self, openapi: &mut utoipa::openapi::OpenApi) {
         if let Some(components) = openapi.components.as_mut() {
+            // Add security scheme
             components.add_security_scheme(
                 "bearerAuth",
                 utoipa::openapi::security::SecurityScheme::Http(
@@ -44,7 +50,7 @@ impl utoipa::Modify for SecurityAddon {
                         .description(Some("Firebase JWT token authentication"))
                         .build(),
                 ),
-            )
+            );
         }
     }
 }
