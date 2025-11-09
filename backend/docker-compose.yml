@@ -13,14 +13,13 @@ services:
       - "5432:5432"
 
   api:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: promillezone-api
     restart: always
-    depends_on:
-      - database
     environment:
-      DATABASE_URL: postgres://postgres:password@database:5432/promillezone
-      JWT_SECRET: TopSecretKey
+      DATABASE_URL: ${DATABASE_URL}
     ports:
       - "3000:3000"
 

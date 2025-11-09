@@ -1,8 +1,11 @@
 target
 dockerignore
+docker-compose.yml
 Dockerfile
 .vscode
 .idea
 .gitignore
+.diesel.toml
 .git
-.env
+.env*
+diesel
