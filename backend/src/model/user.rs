@@ -13,6 +13,7 @@ pub struct User {
     pub created_at: NaiveDateTime,
     #[serde(skip_serializing)]
     #[schema(value_type = String, format = DateTime)]
+    #[allow(dead_code)]
     pub updated_at: NaiveDateTime,
 }
 
