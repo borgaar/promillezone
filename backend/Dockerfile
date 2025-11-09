@@ -1,18 +1,20 @@
-FROM rust:slim-trixie AS base
+FROM rust:1-alpine AS base
 
 FROM base AS builder
 
 WORKDIR /build
 
-COPY . .
+RUN apk add --no-cache \
+    openssl-libs-static \
+    postgresql-dev
 
-RUN apt update && apt-get install -y libpq-dev pkg-config
+COPY . .
 
 RUN cargo build --release
 
 FROM base AS runner
 
-RUN useradd -m -u 1000 nonroot
+RUN adduser -D -u 1000 nonroot
 
 USER nonroot:nonroot
 
