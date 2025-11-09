@@ -1629,7 +1629,6 @@ dependencies = [
  "diesel-async",
  "dotenvy",
  "jsonwebtoken",
- "lazy_static",
  "once_cell",
  "reqwest",
  "serde",

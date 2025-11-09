@@ -19,10 +19,6 @@ use utoipa_scalar::{Scalar, Servable};
 
 use crate::utils::firebase_auth::FirebaseAuth;
 
-lazy_static::lazy_static! {
-    pub static ref JWT_SECRET: String = std::env::var("JWT_SECRET").expect("JWT_SECRET must be set");
-}
-
 #[derive(OpenApi)]
 #[openapi(
     paths(
