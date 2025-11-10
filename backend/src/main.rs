@@ -1,16 +1,13 @@
+mod entity;
 mod handlers;
 mod model;
-mod schema;
 mod utils;
 
 use axum::{
     Router, middleware as axum_middleware,
     routing::{get, post},
 };
-use diesel_async::{
-    AsyncPgConnection,
-    pooled_connection::{AsyncDieselConnectionManager, deadpool::Pool},
-};
+use sea_orm::{Database, DatabaseConnection};
 use std::{net::SocketAddr, sync::Arc};
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
@@ -21,7 +18,7 @@ use crate::utils::{firebase_auth::FirebaseAuth, openapi::ApiDoc};
 
 #[derive(Clone)]
 pub struct AppState {
-    pub pool: Pool<AsyncPgConnection>,
+    pub db: DatabaseConnection,
     pub firebase_auth: Arc<FirebaseAuth>,
 }
 
@@ -41,20 +38,16 @@ async fn main() {
     tracing::info!("Starting Promillezone API server");
 
     let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    let config = AsyncDieselConnectionManager::<AsyncPgConnection>::new(database_url);
-    let pool = Pool::builder(config)
-        .build()
-        .expect("Failed to create pool");
+    let db = Database::connect(&database_url)
+        .await
+        .expect("Failed to connect to database");
 
-    tracing::info!("Database connection pool initialized");
+    tracing::info!("Database connection established");
 
     let firebase_auth = Arc::new(FirebaseAuth::new());
     tracing::info!("Firebase authentication configured");
 
-    let state = AppState {
-        pool,
-        firebase_auth,
-    };
+    let state = AppState { db, firebase_auth };
 
     // Protected routes
     let protected = Router::new()

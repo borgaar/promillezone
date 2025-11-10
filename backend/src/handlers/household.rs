@@ -1,17 +1,11 @@
 use axum::{Extension, Json, extract::State, response::Response};
-use diesel::{
-    ExpressionMethods, SelectableHelper,
-    query_dsl::methods::{FilterDsl, SelectDsl},
-};
-use diesel_async::{AsyncConnection, RunQueryDsl};
+use sea_orm::{ActiveModelTrait, EntityTrait, Set, TransactionTrait};
 
 use crate::{
     AppState,
-    model::{
-        self,
-        diesel::households::{Household, NewHousehold},
-    },
-    schema,
+    entity::{households, profiles},
+    model,
+    model::api::response::HouseholdResponse,
     utils::firebase_auth::Claims,
 };
 
@@ -21,7 +15,7 @@ use crate::{
     tag = "household",
     description = "Create a new household",
     responses(
-        (status = 200, description = "Household created successfully", body = Household),
+        (status = 200, description = "Household created successfully", body = HouseholdResponse),
         (status = 401, description = "Unauthorized - Invalid or missing authentication token", body = model::api::error::UnauthorizedError),
         (status = 409, description = "User is already in a household", body = model::api::error::UserAlreadyInHouseholdError),
         (status = 500, description = "Internal server error", body = model::api::error::InternalServerError),
@@ -35,55 +29,62 @@ pub async fn create_household(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<model::api::household::CreateHouseholdRequest>,
-) -> Result<Json<Household>, Response> {
-    let household = NewHousehold { name: payload.name };
+) -> Result<Json<HouseholdResponse>, Response> {
+    let user_id = claims.user_id.clone();
 
-    let mut conn = state.pool.get().await.map_err(|e| {
-        tracing::error!("Failed to get database connection: {}", e);
+    let txn = state.db.begin().await.map_err(|e| {
+        tracing::error!("Failed to begin transaction: {}", e);
         model::api::error::ErrorResponse::internal_server_error()
     })?;
 
-    let user_id = claims.user_id.clone();
-
-    let household = conn
-        .transaction::<Household, diesel::result::Error, _>(|conn| {
-            Box::pin(async move {
-                let old_household = schema::profiles::table
-                    .filter(schema::profiles::id.eq(&user_id))
-                    .select(schema::profiles::household_id)
-                    .first::<Option<uuid::Uuid>>(conn)
-                    .await?;
-
-                if old_household.is_some() {
-                    return Err(diesel::result::Error::RollbackTransaction);
-                }
-
-                let household = diesel::insert_into(schema::households::table)
-                    .values(&household)
-                    .returning(Household::as_returning())
-                    .get_result::<Household>(conn)
-                    .await?;
-
-                diesel::update(schema::profiles::table)
-                    .filter(schema::profiles::id.eq(&user_id))
-                    .set(schema::profiles::household_id.eq(household.id))
-                    .execute(conn)
-                    .await?;
-
-                Ok(household)
-            })
-        })
+    // Check if user already has a household
+    let existing_profile = profiles::Entity::find_by_id(&user_id)
+        .one(&txn)
         .await
-        .map_err(|e| match e {
-            diesel::result::Error::RollbackTransaction => {
-                tracing::warn!("User {} is already in a household", claims.user_id);
-                model::api::error::ErrorResponse::user_already_in_household()
-            }
-            _ => {
-                tracing::error!("Failed to create household: {}", e);
-                model::api::error::ErrorResponse::internal_server_error()
-            }
+        .map_err(|e| {
+            tracing::error!("Failed to query profile: {}", e);
+            model::api::error::ErrorResponse::internal_server_error()
         })?;
 
-    Ok(Json(household))
+    let profile = match existing_profile {
+        Some(p) => {
+            if p.household_id.is_some() {
+                tracing::warn!("User {} is already in a household", user_id);
+                return Err(model::api::error::ErrorResponse::user_already_in_household());
+            }
+            p
+        }
+        None => {
+            tracing::error!("Profile not found for user {}", user_id);
+            return Err(model::api::error::ErrorResponse::internal_server_error());
+        }
+    };
+
+    // Create new household
+    let new_household = households::ActiveModel {
+        name: Set(payload.name),
+        ..Default::default()
+    };
+
+    let household = new_household.insert(&txn).await.map_err(|e| {
+        tracing::error!("Failed to create household: {}", e);
+        model::api::error::ErrorResponse::internal_server_error()
+    })?;
+
+    // Update user's household_id
+    let mut active_profile: profiles::ActiveModel = profile.into();
+    active_profile.household_id = Set(Some(household.id));
+
+    active_profile.update(&txn).await.map_err(|e| {
+        tracing::error!("Failed to update profile: {}", e);
+        model::api::error::ErrorResponse::internal_server_error()
+    })?;
+
+    // Commit transaction
+    txn.commit().await.map_err(|e| {
+        tracing::error!("Failed to commit transaction: {}", e);
+        model::api::error::ErrorResponse::internal_server_error()
+    })?;
+
+    Ok(Json(household.into()))
 }

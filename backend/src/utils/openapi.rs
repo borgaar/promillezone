@@ -20,11 +20,16 @@ use crate::model;
     ),
     components(
         schemas(
+            model::api::response::ProfileResponse,
+            model::api::response::HouseholdResponse,
+            model::api::profile::CreateProfileRequest,
+            model::api::household::CreateHouseholdRequest,
             model::api::error::ErrorResponse,
             model::api::error::UnauthorizedError,
             model::api::error::NotFoundError,
             model::api::error::BadRequestError,
             model::api::error::ConflictError,
+            model::api::error::UserAlreadyInHouseholdError,
             model::api::error::InternalServerError,
         )
     ),
