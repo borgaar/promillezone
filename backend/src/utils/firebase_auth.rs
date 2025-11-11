@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, time::SystemTime};
 use tokio::sync::RwLock;
 
-use crate::model;
+use crate::model::dto;
 
 pub struct FirebaseAuth {
     firebase_key_url: String,
@@ -187,29 +187,29 @@ pub async fn auth_middleware(
         .and_then(|h| h.to_str().ok())
         .and_then(|h| h.strip_prefix("Bearer "))
     else {
-        return model::api::error::ErrorResponse::unauthorized();
+        return dto::ErrorResponse::unauthorized();
     };
 
     // Get Firebase signing keys
     let Ok(keys) = state.firebase_auth.get_keys().await else {
         tracing::error!("Failed to get Firebase Auth signing keys");
-        return model::api::error::ErrorResponse::internal_server_error();
+        return dto::ErrorResponse::internal_server_error();
     };
 
     // Decode token header and get key ID used for signing
     let Ok(header) = jsonwebtoken::decode_header(token) else {
         tracing::error!("Failed to decode JWT header");
-        return model::api::error::ErrorResponse::unauthorized();
+        return dto::ErrorResponse::unauthorized();
     };
     
     let Some(kid) = header.kid else {
         tracing::error!("JWT header missing key ID (kid)");
-        return model::api::error::ErrorResponse::unauthorized();
+        return dto::ErrorResponse::unauthorized();
     };
     
     let Some(decoding_key) = keys.get(&kid) else {
         tracing::error!("No matching Firebase public key found for kid: {}", kid);
-        return model::api::error::ErrorResponse::unauthorized();
+        return dto::ErrorResponse::unauthorized();
     };
 
     // Validate token claims
@@ -224,13 +224,13 @@ pub async fn auth_middleware(
         Ok(data) => data,
         Err(e) => {
             tracing::error!("Failed to validate JWT: {}", e);
-            return model::api::error::ErrorResponse::unauthorized();
+            return dto::ErrorResponse::unauthorized();
         }
     };
 
     if token_data.claims.sub.is_empty() {
         tracing::error!("JWT subject (sub) claim is empty");
-        return model::api::error::ErrorResponse::unauthorized();
+        return dto::ErrorResponse::unauthorized();
     }
 
     // Insert claims into request extensions for downstream handlers

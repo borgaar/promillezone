@@ -7,8 +7,7 @@ use validator::Validate;
 use crate::{
     AppState,
     entity::{household_invite_codes, households, profiles},
-    model,
-    model::api::response::HouseholdResponse,
+    model::dto::{self, HouseholdResponse},
     utils::firebase_auth::Claims,
 };
 
@@ -16,15 +15,15 @@ use crate::{
     post,
     path = "/api/household",
     tag = "household",
-    description = "Create a new household",
+    description = "Create a new household with the authenticated user as the first member. Requires name, address, and household type (family, dorm, or other).",
     responses(
         (status = 200, description = "Household created successfully", body = HouseholdResponse),
-        (status = 400, description = "Invalid request payload", body = model::api::error::BadRequestError),
-        (status = 401, description = "Unauthorized - Invalid or missing authentication token", body = model::api::error::UnauthorizedError),
-        (status = 409, description = "User is already in a household", body = model::api::error::UserAlreadyInHouseholdError),
-        (status = 500, description = "Internal server error", body = model::api::error::InternalServerError),
+        (status = 400, description = "Invalid request payload", body = dto::BadRequestError),
+        (status = 401, description = "Unauthorized - Invalid or missing authentication token", body = dto::UnauthorizedError),
+        (status = 409, description = "User is already a member of a household", body = dto::UserAlreadyInHouseholdError),
+        (status = 500, description = "Internal server error", body = dto::InternalServerError),
     ),
-    request_body = model::api::household::CreateHouseholdRequest,
+    request_body = dto::CreateHouseholdRequest,
     security(
         ("bearerAuth" = [])
     )
@@ -32,12 +31,12 @@ use crate::{
 pub async fn create_household(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Json(payload): Json<model::api::household::CreateHouseholdRequest>,
+    Json(payload): Json<dto::CreateHouseholdRequest>,
 ) -> Result<Json<HouseholdResponse>, Response> {
     // Validate request
     if let Err(e) = payload.validate() {
         tracing::warn!("Invalid create household request: {}", e);
-        return Err(model::api::error::ErrorResponse::bad_request(Some(
+        return Err(dto::ErrorResponse::bad_request(Some(
             "Invalid request payload",
         )));
     }
@@ -46,7 +45,7 @@ pub async fn create_household(
 
     let txn = state.db.begin().await.map_err(|e| {
         tracing::error!("Failed to begin transaction: {}", e);
-        model::api::error::ErrorResponse::internal_server_error()
+        dto::ErrorResponse::internal_server_error()
     })?;
 
     // Check if user already has a household
@@ -55,20 +54,20 @@ pub async fn create_household(
         .await
         .map_err(|e| {
             tracing::error!("Failed to query profile: {}", e);
-            model::api::error::ErrorResponse::internal_server_error()
+            dto::ErrorResponse::internal_server_error()
         })?;
 
     let profile = match existing_profile {
         Some(p) => {
             if p.household_id.is_some() {
                 tracing::warn!("User {} is already in a household", user_id);
-                return Err(model::api::error::ErrorResponse::user_already_in_household());
+                return Err(dto::ErrorResponse::user_already_in_household());
             }
             p
         }
         None => {
             tracing::error!("Profile not found for user {}", user_id);
-            return Err(model::api::error::ErrorResponse::internal_server_error());
+            return Err(dto::ErrorResponse::internal_server_error());
         }
     };
 
@@ -76,12 +75,13 @@ pub async fn create_household(
     let new_household = households::ActiveModel {
         name: Set(payload.name),
         address_text: Set(payload.address_text),
+        household_type: Set(payload.household_type.into()),
         ..Default::default()
     };
 
     let household = new_household.insert(&txn).await.map_err(|e| {
         tracing::error!("Failed to create household: {}", e);
-        model::api::error::ErrorResponse::internal_server_error()
+        dto::ErrorResponse::internal_server_error()
     })?;
 
     // Update user's household_id
@@ -90,13 +90,13 @@ pub async fn create_household(
 
     active_profile.update(&txn).await.map_err(|e| {
         tracing::error!("Failed to update profile: {}", e);
-        model::api::error::ErrorResponse::internal_server_error()
+        dto::ErrorResponse::internal_server_error()
     })?;
 
     // Commit transaction
     txn.commit().await.map_err(|e| {
         tracing::error!("Failed to commit transaction: {}", e);
-        model::api::error::ErrorResponse::internal_server_error()
+        dto::ErrorResponse::internal_server_error()
     })?;
 
     Ok(Json(household.into()))
@@ -106,13 +106,13 @@ pub async fn create_household(
     post,
     path = "/api/household/invite",
     tag = "household",
-    description = "Create an invite code for your household. The code expires in 1 hour.",
+    description = "Generate a 6-digit numeric invite code for your household. The code expires in 1 hour and can only be used once.",
     responses(
-        (status = 200, description = "Invite code created successfully", body = model::api::household::CreateInviteCodeResponse),
-        (status = 400, description = "User is not in a household", body = model::api::error::BadRequestError),
-        (status = 401, description = "Unauthorized - Invalid or missing authentication token", body = model::api::error::UnauthorizedError),
-        (status = 404, description = "Profile not found", body = model::api::error::NotFoundError),
-        (status = 500, description = "Internal server error", body = model::api::error::InternalServerError),
+        (status = 200, description = "Invite code created successfully", body = dto::InviteCodeResponse),
+        (status = 400, description = "User is not a member of any household", body = dto::BadRequestError),
+        (status = 401, description = "Unauthorized - Invalid or missing authentication token", body = dto::UnauthorizedError),
+        (status = 404, description = "Profile not found", body = dto::NotFoundError),
+        (status = 500, description = "Internal server error", body = dto::InternalServerError),
     ),
     security(
         ("bearerAuth" = [])
@@ -121,7 +121,7 @@ pub async fn create_household(
 pub async fn create_invite_code(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Result<Json<model::api::household::CreateInviteCodeResponse>, Response> {
+) -> Result<Json<dto::InviteCodeResponse>, Response> {
     let user_id = &claims.user_id;
 
     // Get user's profile
@@ -130,19 +130,17 @@ pub async fn create_invite_code(
         .await
         .map_err(|e| {
             tracing::error!("Failed to query profile: {}", e);
-            model::api::error::ErrorResponse::internal_server_error()
+            dto::ErrorResponse::internal_server_error()
         })?
         .ok_or_else(|| {
             tracing::warn!("Profile not found for user {}", user_id);
-            model::api::error::ErrorResponse::not_found(Some("Profile not found"))
+            dto::ErrorResponse::not_found(Some("Profile not found"))
         })?;
 
     // Check if user is in a household
     let household_id = profile.household_id.ok_or_else(|| {
         tracing::warn!("User {} is not in a household", user_id);
-        model::api::error::ErrorResponse::bad_request(Some(
-            "You must be in a household to create invite codes",
-        ))
+        dto::ErrorResponse::bad_request(Some("You must be in a household to create invite codes"))
     })?;
 
     // Generate 6-digit code
@@ -164,12 +162,13 @@ pub async fn create_invite_code(
 
     let created_code = invite_code.insert(&state.db).await.map_err(|e| {
         tracing::error!("Failed to insert invite code: {}", e);
-        model::api::error::ErrorResponse::internal_server_error()
+        dto::ErrorResponse::internal_server_error()
     })?;
 
-    Ok(Json(model::api::household::CreateInviteCodeResponse {
+    Ok(Json(dto::InviteCodeResponse {
         code,
-        expiration: created_code.expiration.into(),
+        household_id,
+        expires_at: created_code.expiration.into(),
     }))
 }
 
@@ -177,16 +176,16 @@ pub async fn create_invite_code(
     post,
     path = "/api/household/join",
     tag = "household",
-    description = "Join a household using an invite code",
+    description = "Join a household using a 6-digit numeric invite code. The code must be valid and not expired. Users can only be in one household at a time.",
     responses(
-        (status = 200, description = "Successfully joined household", body = HouseholdResponse),
-        (status = 400, description = "Invalid or expired invite code, or invalid request payload", body = model::api::error::BadRequestError),
-        (status = 401, description = "Unauthorized - Invalid or missing authentication token", body = model::api::error::UnauthorizedError),
-        (status = 404, description = "Profile not found", body = model::api::error::NotFoundError),
-        (status = 409, description = "User is already in a household", body = model::api::error::UserAlreadyInHouseholdError),
-        (status = 500, description = "Internal server error", body = model::api::error::InternalServerError),
+        (status = 200, description = "Successfully joined the household", body = HouseholdResponse),
+        (status = 400, description = "Invalid code format, expired invite code, or invalid request payload", body = dto::BadRequestError),
+        (status = 401, description = "Unauthorized - Invalid or missing authentication token", body = dto::UnauthorizedError),
+        (status = 404, description = "Profile not found", body = dto::NotFoundError),
+        (status = 409, description = "User is already a member of a household", body = dto::UserAlreadyInHouseholdError),
+        (status = 500, description = "Internal server error", body = dto::InternalServerError),
     ),
-    request_body = model::api::household::JoinHouseholdRequest,
+    request_body = dto::JoinHouseholdRequest,
     security(
         ("bearerAuth" = [])
     )
@@ -194,12 +193,12 @@ pub async fn create_invite_code(
 pub async fn join_household(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Json(payload): Json<model::api::household::JoinHouseholdRequest>,
+    Json(payload): Json<dto::JoinHouseholdRequest>,
 ) -> Result<Json<HouseholdResponse>, Response> {
     // Validate request
     if let Err(e) = payload.validate() {
         tracing::warn!("Invalid join household request: {}", e);
-        return Err(model::api::error::ErrorResponse::bad_request(Some(
+        return Err(dto::ErrorResponse::bad_request(Some(
             "Invalid request payload",
         )));
     }
@@ -207,7 +206,7 @@ pub async fn join_household(
     // Validate code is numeric
     if !payload.is_valid_code() {
         tracing::warn!("Invite code contains non-numeric characters");
-        return Err(model::api::error::ErrorResponse::bad_request(Some(
+        return Err(dto::ErrorResponse::bad_request(Some(
             "Invite code must be numeric",
         )));
     }
@@ -217,7 +216,7 @@ pub async fn join_household(
     // Start transaction
     let txn = state.db.begin().await.map_err(|e| {
         tracing::error!("Failed to begin transaction: {}", e);
-        model::api::error::ErrorResponse::internal_server_error()
+        dto::ErrorResponse::internal_server_error()
     })?;
 
     // Find valid invite code
@@ -228,11 +227,11 @@ pub async fn join_household(
         .await
         .map_err(|e| {
             tracing::error!("Database query failed: {}", e);
-            model::api::error::ErrorResponse::internal_server_error()
+            dto::ErrorResponse::internal_server_error()
         })?
         .ok_or_else(|| {
             tracing::warn!("Invalid or expired invite code: {}", payload.code);
-            model::api::error::ErrorResponse::bad_request(Some("Invalid or expired invite code"))
+            dto::ErrorResponse::bad_request(Some("Invalid or expired invite code"))
         })?;
 
     // Get user's profile
@@ -241,17 +240,17 @@ pub async fn join_household(
         .await
         .map_err(|e| {
             tracing::error!("Failed to query profile: {}", e);
-            model::api::error::ErrorResponse::internal_server_error()
+            dto::ErrorResponse::internal_server_error()
         })?
         .ok_or_else(|| {
             tracing::warn!("Profile not found for user {}", user_id);
-            model::api::error::ErrorResponse::not_found(Some("Profile not found"))
+            dto::ErrorResponse::not_found(Some("Profile not found"))
         })?;
 
     // Check if user is already in a household
     if profile.household_id.is_some() {
         tracing::warn!("User {} is already in a household", user_id);
-        return Err(model::api::error::ErrorResponse::user_already_in_household());
+        return Err(dto::ErrorResponse::user_already_in_household());
     }
 
     // Get household details
@@ -260,11 +259,11 @@ pub async fn join_household(
         .await
         .map_err(|e| {
             tracing::error!("Failed to query household: {}", e);
-            model::api::error::ErrorResponse::internal_server_error()
+            dto::ErrorResponse::internal_server_error()
         })?
         .ok_or_else(|| {
             tracing::error!("Household not found for invite code");
-            model::api::error::ErrorResponse::internal_server_error()
+            dto::ErrorResponse::internal_server_error()
         })?;
 
     // Update user's household_id
@@ -273,20 +272,20 @@ pub async fn join_household(
 
     active_profile.update(&txn).await.map_err(|e| {
         tracing::error!("Failed to update profile: {}", e);
-        model::api::error::ErrorResponse::internal_server_error()
+        dto::ErrorResponse::internal_server_error()
     })?;
 
     // Delete used invite code
     let invite_active: household_invite_codes::ActiveModel = invite.into();
     invite_active.delete(&txn).await.map_err(|e| {
         tracing::error!("Failed to delete used invite code: {}", e);
-        model::api::error::ErrorResponse::internal_server_error()
+        dto::ErrorResponse::internal_server_error()
     })?;
 
     // Commit transaction
     txn.commit().await.map_err(|e| {
         tracing::error!("Failed to commit transaction: {}", e);
-        model::api::error::ErrorResponse::internal_server_error()
+        dto::ErrorResponse::internal_server_error()
     })?;
 
     // Maintenance: Clean up expired invite codes (best-effort)
@@ -309,13 +308,13 @@ pub async fn join_household(
     delete,
     path = "/api/household/leave",
     tag = "household",
-    description = "Leave your current household. If you are the last member, the household will be deleted.",
+    description = "Leave your current household. If you are the last member, the household will be automatically deleted along with any associated invite codes.",
     responses(
         (status = 200, description = "Successfully left the household"),
-        (status = 400, description = "User is not in a household", body = model::api::error::BadRequestError),
-        (status = 401, description = "Unauthorized - Invalid or missing authentication token", body = model::api::error::UnauthorizedError),
-        (status = 404, description = "Profile not found", body = model::api::error::NotFoundError),
-        (status = 500, description = "Internal server error", body = model::api::error::InternalServerError),
+        (status = 400, description = "User is not a member of any household", body = dto::BadRequestError),
+        (status = 401, description = "Unauthorized - Invalid or missing authentication token", body = dto::UnauthorizedError),
+        (status = 404, description = "Profile not found", body = dto::NotFoundError),
+        (status = 500, description = "Internal server error", body = dto::InternalServerError),
     ),
     security(
         ("bearerAuth" = [])
@@ -330,7 +329,7 @@ pub async fn leave_household(
     // Start transaction
     let txn = state.db.begin().await.map_err(|e| {
         tracing::error!("Failed to begin transaction: {}", e);
-        model::api::error::ErrorResponse::internal_server_error()
+        dto::ErrorResponse::internal_server_error()
     })?;
 
     // Get user's profile
@@ -339,17 +338,17 @@ pub async fn leave_household(
         .await
         .map_err(|e| {
             tracing::error!("Failed to query profile: {}", e);
-            model::api::error::ErrorResponse::internal_server_error()
+            dto::ErrorResponse::internal_server_error()
         })?
         .ok_or_else(|| {
             tracing::warn!("Profile not found for user {}", user_id);
-            model::api::error::ErrorResponse::not_found(Some("Profile not found"))
+            dto::ErrorResponse::not_found(Some("Profile not found"))
         })?;
 
     // Check if user is in a household
     let household_id = profile.household_id.ok_or_else(|| {
         tracing::warn!("User {} is not in a household", user_id);
-        model::api::error::ErrorResponse::bad_request(Some("You are not in a household"))
+        dto::ErrorResponse::bad_request(Some("You are not in a household"))
     })?;
 
     // Remove user from household
@@ -358,7 +357,7 @@ pub async fn leave_household(
 
     active_profile.update(&txn).await.map_err(|e| {
         tracing::error!("Failed to update profile: {}", e);
-        model::api::error::ErrorResponse::internal_server_error()
+        dto::ErrorResponse::internal_server_error()
     })?;
 
     // Check if there are any remaining members in the household
@@ -368,7 +367,7 @@ pub async fn leave_household(
         .await
         .map_err(|e| {
             tracing::error!("Failed to count household members: {}", e);
-            model::api::error::ErrorResponse::internal_server_error()
+            dto::ErrorResponse::internal_server_error()
         })?;
 
     // If no members left, delete the household (cascade will delete invite codes)
@@ -380,7 +379,7 @@ pub async fn leave_household(
             .await
             .map_err(|e| {
                 tracing::error!("Failed to delete household: {}", e);
-                model::api::error::ErrorResponse::internal_server_error()
+                dto::ErrorResponse::internal_server_error()
             })?;
     } else {
         tracing::info!(
@@ -394,7 +393,7 @@ pub async fn leave_household(
     // Commit transaction
     txn.commit().await.map_err(|e| {
         tracing::error!("Failed to commit transaction: {}", e);
-        model::api::error::ErrorResponse::internal_server_error()
+        dto::ErrorResponse::internal_server_error()
     })?;
 
     Ok(())

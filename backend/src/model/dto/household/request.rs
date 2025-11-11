@@ -1,24 +1,25 @@
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use utoipa::ToSchema;
 use validator::Validate;
 
+use super::enums::HouseholdType;
+
 #[derive(Debug, Deserialize, Validate, ToSchema)]
 pub struct CreateHouseholdRequest {
+    #[validate(length(min = 1, max = 255))]
+    #[schema(example = "The Smith Family", max_length = 255, min_length = 1)]
     pub name: String,
-    #[validate(length(min = 3))]
+    #[validate(length(min = 1, max = 255))]
+    #[schema(example = "123 Main St, Springfield", max_length = 255, min_length = 1)]
     pub address_text: String,
-}
-
-#[derive(Debug, Serialize, ToSchema)]
-pub struct CreateInviteCodeResponse {
-    pub code: String,
-    #[schema(value_type = String, example = "2025-11-11T12:00:00Z")]
-    pub expiration: chrono::DateTime<chrono::Utc>,
+    #[schema(example = "family")]
+    pub household_type: HouseholdType,
 }
 
 #[derive(Debug, Deserialize, Validate, ToSchema)]
 pub struct JoinHouseholdRequest {
     #[validate(length(min = 6, max = 6))]
+    #[schema(example = "123456", min_length = 6, max_length = 6)]
     pub code: String,
 }
 

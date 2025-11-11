@@ -1,7 +1,7 @@
 use utoipa::OpenApi;
 
 use crate::handlers;
-use crate::model;
+use crate::model::dto;
 
 #[derive(OpenApi)]
 #[openapi(
@@ -24,21 +24,22 @@ use crate::model;
     ),
     components(
         schemas(
-            model::api::response::ProfileResponse,
-            model::api::response::HouseholdResponse,
-            model::api::profile::CreateProfileRequest,
-            model::api::profile::VerifyProfileRequest,
-            model::api::household::CreateHouseholdRequest,
-            model::api::household::CreateInviteCodeResponse,
-            model::api::household::JoinHouseholdRequest,
-            model::api::error::ErrorResponse,
-            model::api::error::UnauthorizedError,
-            model::api::error::NotFoundError,
-            model::api::error::BadRequestError,
-            model::api::error::ConflictError,
-            model::api::error::UserAlreadyInHouseholdError,
-            model::api::error::InternalServerError,
-            model::api::error::ProfileNotVerifiedError,
+            dto::ProfileResponse,
+            dto::HouseholdResponse,
+            dto::CreateProfileRequest,
+            dto::VerifyProfileRequest,
+            dto::CreateHouseholdRequest,
+            dto::HouseholdType,
+            dto::InviteCodeResponse,
+            dto::JoinHouseholdRequest,
+            dto::ErrorResponse,
+            dto::UnauthorizedError,
+            dto::NotFoundError,
+            dto::BadRequestError,
+            dto::ConflictError,
+            dto::UserAlreadyInHouseholdError,
+            dto::InternalServerError,
+            dto::ProfileNotVerifiedError,
         )
     ),
     modifiers(&SecurityAddon),
