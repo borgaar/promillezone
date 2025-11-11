@@ -36,6 +36,9 @@ jobs:
           VAULTWARDEN_ITEM_ID: ${{ secrets.VAULTWARDEN_ITEM_ID }}
           ENV_RELATIVE_PATH: ${{ vars.ENV_RELATIVE_PATH }}
         run: |
+          # Exit immediately if any command exits with a non-zero status
+          set -euo pipefail
+
           # Start ssh-agent and add the SSH key
           eval $(ssh-agent -s)
           ssh-add ~/.ssh/key
