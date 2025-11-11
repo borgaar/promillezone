@@ -17,7 +17,8 @@ echo "-> Building new Docker image"
 docker build --build-arg CARGO_BUILD_JOBS=3 --no-cache -t $IMAGE_NAME .
 
 echo "-> Migrating database"
-diesel migration run
+cd migrations
+cargo run --jobs 3 --release -- up
 
 echo "-> Stopping and removing old container"
 docker rm -f $DOMAIN || true
