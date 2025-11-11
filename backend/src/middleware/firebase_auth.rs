@@ -43,6 +43,9 @@ pub struct Claims {
     
     #[serde(skip_serializing_if = "Option::is_none")]
     pub email: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub household_id: Option<uuid::Uuid>,
     
     #[serde(skip_serializing_if = "Option::is_none")]
     pub email_verified: Option<bool>,
@@ -175,7 +178,7 @@ impl Default for FirebaseAuth {
     }
 }
 
-pub async fn auth_middleware(
+pub async fn authenticate(
     State(state): State<crate::AppState>,
     mut req: Request,
     next: Next,

@@ -73,12 +73,19 @@ async fn main() {
             post(handlers::household::create_household),
         )
         .route(
-            "/api/household/invite",
-            post(handlers::household::create_invite_code),
-        )
-        .route(
             "/api/household/join",
             post(handlers::household::join_household),
+        )
+        .route_layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            middleware::firebase_auth::authenticate,
+        ));
+
+    // Routes that require both authentication and household membership
+    let household_protected = Router::new()
+        .route(
+            "/api/household/invite",
+            post(handlers::household::create_invite_code),
         )
         .route(
             "/api/household/leave",
@@ -86,7 +93,11 @@ async fn main() {
         )
         .route_layer(axum::middleware::from_fn_with_state(
             state.clone(),
-            middleware::firebase_auth::auth_middleware,
+            middleware::household::inject_household,
+        ))
+        .route_layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            middleware::firebase_auth::authenticate,
         ));
 
     // Build OpenAPI spec
@@ -94,6 +105,7 @@ async fn main() {
 
     let app = Router::new()
         .merge(protected)
+        .merge(household_protected)
         .layer(TraceLayer::new_for_http())
         .layer(CorsLayer::permissive())
         .merge(Scalar::with_url("/scalar", openapi))

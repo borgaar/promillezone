@@ -27,6 +27,9 @@ pub const INTERNAL_SERVER_ERROR_MESSAGE: &str = "Internal server error";
 pub const PROFILE_NOT_VERIFIED_ERROR_CODE: &str = "PROFILE_NOT_VERIFIED";
 pub const PROFILE_NOT_VERIFIED_ERROR_MESSAGE: &str = "Profile is not verified";
 
+pub const NO_HOUSEHOLD_CODE: &str = "NO_HOUSEHOLD";
+pub const NO_HOUSEHOLD_MESSAGE: &str = "Profile does not belong to a household";
+
 #[derive(Debug, Serialize, ToSchema)]
 pub struct ErrorResponse {
     pub code: String,
@@ -100,6 +103,16 @@ pub struct UserAlreadyInHouseholdError {
     "message": PROFILE_NOT_VERIFIED_ERROR_MESSAGE
 }))]
 pub struct ProfileNotVerifiedError {
+    pub code: String,
+    pub message: String,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+#[schema(example = json!({
+    "code": NO_HOUSEHOLD_CODE,
+    "message": NO_HOUSEHOLD_MESSAGE
+}))]
+pub struct NoHouseholdError {
     pub code: String,
     pub message: String,
 }
@@ -178,6 +191,17 @@ impl ErrorResponse {
             axum::Json(ErrorResponse {
                 code: PROFILE_NOT_VERIFIED_ERROR_CODE.to_string(),
                 message: PROFILE_NOT_VERIFIED_ERROR_MESSAGE.to_string(),
+            }),
+        )
+            .into_response()
+    }
+
+    pub fn no_household() -> Response {
+        (
+            StatusCode::BAD_REQUEST,
+            axum::Json(ErrorResponse {
+                code: NO_HOUSEHOLD_CODE.to_string(),
+                message: NO_HOUSEHOLD_MESSAGE.to_string(),
             }),
         )
             .into_response()

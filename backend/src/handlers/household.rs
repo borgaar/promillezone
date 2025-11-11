@@ -106,10 +106,11 @@ pub async fn create_household(
     post,
     path = "/api/household/invite",
     tag = "household",
-    description = "Generate a 6-digit numeric invite code for your household. The code expires in 1 hour and can only be used once.",
+    description = "Generate a 6-digit numeric invite code for your household. The code expires in 1 hour and can only be used once. User must be part of a household.",
     responses(
         (status = 200, description = "Invite code created successfully", body = dto::InviteCodeResponse),
         (status = 400, description = "User is not a member of any household", body = dto::BadRequestError),
+        (status = 400, description = "User is not a part of a household", body = dto::NoHouseholdError),
         (status = 401, description = "Unauthorized - Invalid or missing authentication token", body = dto::UnauthorizedError),
         (status = 404, description = "Profile not found", body = dto::NotFoundError),
         (status = 500, description = "Internal server error", body = dto::InternalServerError),
@@ -324,7 +325,17 @@ pub async fn leave_household(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Result<(), Response> {
+    // Get data from claims
     let user_id = &claims.user_id;
+    let Some(household_id) = claims.household_id else {
+        tracing::warn!(
+            "User {} is not in a household, did the middleware fail?",
+            user_id
+        );
+        return Err(dto::ErrorResponse::bad_request(Some(
+            "You are not a member of any household",
+        )));
+    };
 
     // Start transaction
     let txn = state.db.begin().await.map_err(|e| {
@@ -332,8 +343,8 @@ pub async fn leave_household(
         dto::ErrorResponse::internal_server_error()
     })?;
 
-    // Get user's profile
-    let profile = profiles::Entity::find_by_id(user_id)
+    // Get the user's profile
+    let mut profile: profiles::ActiveModel = profiles::Entity::find_by_id(user_id)
         .one(&txn)
         .await
         .map_err(|e| {
@@ -343,19 +354,13 @@ pub async fn leave_household(
         .ok_or_else(|| {
             tracing::warn!("Profile not found for user {}", user_id);
             dto::ErrorResponse::not_found(Some("Profile not found"))
-        })?;
+        })?
+        .into();
 
-    // Check if user is in a household
-    let household_id = profile.household_id.ok_or_else(|| {
-        tracing::warn!("User {} is not in a household", user_id);
-        dto::ErrorResponse::bad_request(Some("You are not in a household"))
-    })?;
+    // Update profile to remove household_id
+    profile.household_id = Set(None);
 
-    // Remove user from household
-    let mut active_profile: profiles::ActiveModel = profile.into();
-    active_profile.household_id = Set(None);
-
-    active_profile.update(&txn).await.map_err(|e| {
+    profile.update(&txn).await.map_err(|e| {
         tracing::error!("Failed to update profile: {}", e);
         dto::ErrorResponse::internal_server_error()
     })?;

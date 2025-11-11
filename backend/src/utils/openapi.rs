@@ -40,6 +40,7 @@ use crate::model::dto;
             dto::UserAlreadyInHouseholdError,
             dto::InternalServerError,
             dto::ProfileNotVerifiedError,
+            dto::NoHouseholdError
         )
     ),
     modifiers(&SecurityAddon),
