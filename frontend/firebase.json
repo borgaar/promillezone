@@ -1,1 +1,23 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"promillezone-v2","appId":"1:559207171465:android:3ac7cf5115fd78958b0d58","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"promillezone-v2","configurations":{"android":"1:559207171465:android:3ac7cf5115fd78958b0d58","ios":"1:559207171465:ios:f9cf2de2b00950008b0d58"}}}}}}
+{
+    "flutter": {
+        "platforms": {
+            "android": {
+                "default": {
+                    "projectId": "promillezone-v2",
+                    "appId": "1:559207171465:android:3ac7cf5115fd78958b0d58",
+                    "fileOutput": "android/app/google-services.json"
+                }
+            },
+            "dart": {
+                "lib/firebase_options.dart": {
+                    "projectId": "promillezone-v2",
+                    "configurations": {
+                        "android": "1:559207171465:android:3ac7cf5115fd78958b0d58",
+                        "ios": "1:559207171465:ios:f9cf2de2b00950008b0d58",
+                        "web": "1:559207171465:web:da0c185b30fb32108b0d58"
+                    }
+                }
+            }
+        }
+    }
+}

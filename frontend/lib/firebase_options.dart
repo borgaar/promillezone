@@ -17,10 +17,7 @@ import 'package:flutter/foundation.dart'
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      throw UnsupportedError(
-        'DefaultFirebaseOptions have not been configured for web - '
-        'you can reconfigure this by running the FlutterFire CLI again.',
-      );
+      return web;
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
@@ -63,6 +60,18 @@ class DefaultFirebaseOptions {
     messagingSenderId: '559207171465',
     projectId: 'promillezone-v2',
     storageBucket: 'promillezone-v2.firebasestorage.app',
+    iosClientId: '559207171465-7ut8pa94mga0h09ini6lu3grji4b7llm.apps.googleusercontent.com',
     iosBundleId: 'com.example.promillezone',
   );
+
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: 'AIzaSyBSmX5ztvQF3zWPGlNpQVvkkXlpHeaED2w',
+    appId: '1:559207171465:web:da0c185b30fb32108b0d58',
+    messagingSenderId: '559207171465',
+    projectId: 'promillezone-v2',
+    authDomain: 'promillezone-v2.firebaseapp.com',
+    storageBucket: 'promillezone-v2.firebasestorage.app',
+    measurementId: 'G-859SYBP7BB',
+  );
+
 }
