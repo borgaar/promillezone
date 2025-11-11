@@ -6,7 +6,7 @@ use crate::entity::profile_verification_codes::{self};
 use crate::entity::profiles::{self, Entity as Profile};
 use crate::model::dto::{self, ProfileResponse};
 use crate::utils::resend::create_profile_verification_email;
-use crate::{AppState, utils::firebase_auth::Claims};
+use crate::{AppState, middleware::firebase_auth::Claims};
 
 #[utoipa::path(
     get,

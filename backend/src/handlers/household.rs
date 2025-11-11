@@ -7,8 +7,8 @@ use validator::Validate;
 use crate::{
     AppState,
     entity::{household_invite_codes, households, profiles},
+    middleware::firebase_auth::Claims,
     model::dto::{self, HouseholdResponse},
-    utils::firebase_auth::Claims,
 };
 
 #[utoipa::path(

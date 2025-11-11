@@ -1,10 +1,11 @@
 mod entity;
 mod handlers;
+mod middleware;
 mod model;
 mod utils;
 
 use axum::{
-    Router, middleware as axum_middleware,
+    Router,
     routing::{delete, get, post},
 };
 use resend_rs::Resend;
@@ -15,7 +16,8 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use utoipa::OpenApi;
 use utoipa_scalar::{Scalar, Servable};
 
-use crate::utils::{firebase_auth::FirebaseAuth, openapi::ApiDoc};
+use crate::middleware::firebase_auth::FirebaseAuth;
+use crate::utils::openapi::ApiDoc;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -82,9 +84,9 @@ async fn main() {
             "/api/household/leave",
             delete(handlers::household::leave_household),
         )
-        .route_layer(axum_middleware::from_fn_with_state(
+        .route_layer(axum::middleware::from_fn_with_state(
             state.clone(),
-            utils::firebase_auth::auth_middleware,
+            middleware::firebase_auth::auth_middleware,
         ));
 
     // Build OpenAPI spec
