@@ -14,7 +14,7 @@ COMMIT_HASH=$(git rev-parse --short HEAD)
 IMAGE_NAME="$DOMAIN:$COMMIT_HASH"
 
 echo "-> Building new Docker image"
-docker build --no-cache -t $IMAGE_NAME .
+docker build --build-arg CARGO_BUILD_JOBS=3 --no-cache -t $IMAGE_NAME .
 
 echo "-> Migrating database"
 diesel migration run

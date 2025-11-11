@@ -10,7 +10,9 @@ RUN apk add --no-cache \
 
 COPY . .
 
-RUN cargo build --release
+ARG CARGO_BUILD_JOBS="default"
+
+RUN cargo build ${CARGO_BUILD_JOBS:+--jobs $CARGO_BUILD_JOBS} --release
 
 FROM base AS runner
 
