@@ -103,12 +103,17 @@ async fn main() {
     // Build OpenAPI spec
     let openapi = ApiDoc::openapi();
 
+    let opena_json = openapi
+        .to_json()
+        .expect("Failed to convert OpenAPI spec to JSON");
+
     let app = Router::new()
         .merge(protected)
         .merge(household_protected)
         .layer(TraceLayer::new_for_http())
         .layer(CorsLayer::permissive())
-        .merge(Scalar::with_url("/scalar", openapi))
+        .merge(Scalar::with_url("/scalar", openapi.clone()))
+        .merge(Router::new().route("/openapi.json", get(|| async move { opena_json })))
         .with_state(state);
 
     let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
