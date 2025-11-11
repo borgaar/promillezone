@@ -24,6 +24,9 @@ pub const USER_ALREADY_IN_HOUSEHOLD_MESSAGE: &str = "User is already in a househ
 pub const INTERNAL_SERVER_ERROR_CODE: &str = "INTERNAL_SERVER_ERROR";
 pub const INTERNAL_SERVER_ERROR_MESSAGE: &str = "Internal server error";
 
+pub const PROFILE_NOT_VERIFIED_ERROR_CODE: &str = "PROFILE_NOT_VERIFIED";
+pub const PROFILE_NOT_VERIFIED_ERROR_MESSAGE: &str = "Profile is not verified";
+
 #[derive(Debug, Serialize, ToSchema)]
 pub struct ErrorResponse {
     pub code: String,
@@ -91,6 +94,16 @@ pub struct UserAlreadyInHouseholdError {
     pub message: String,
 }
 
+#[derive(Debug, Serialize, ToSchema)]
+#[schema(example = json!({
+    "code": PROFILE_NOT_VERIFIED_ERROR_CODE,
+    "message": PROFILE_NOT_VERIFIED_ERROR_MESSAGE
+}))]
+pub struct ProfileNotVerifiedError {
+    pub code: String,
+    pub message: String,
+}
+
 // Implementations used by handlers to create error responses
 impl ErrorResponse {
     pub fn internal_server_error() -> Response {
@@ -154,6 +167,17 @@ impl ErrorResponse {
             axum::Json(ErrorResponse {
                 code: CONFLICT_CODE.to_string(),
                 message: message.unwrap_or(CONFLICT_MESSAGE).to_string(),
+            }),
+        )
+            .into_response()
+    }
+
+    pub fn profile_not_verified() -> Response {
+        (
+            StatusCode::FORBIDDEN,
+            axum::Json(ErrorResponse {
+                code: PROFILE_NOT_VERIFIED_ERROR_CODE.to_string(),
+                message: PROFILE_NOT_VERIFIED_ERROR_MESSAGE.to_string(),
             }),
         )
             .into_response()

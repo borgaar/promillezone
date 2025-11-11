@@ -15,6 +15,7 @@ pub struct ProfileResponse {
     pub last_name: String,
     #[schema(value_type = Option<String>)]
     pub household_id: Option<Uuid>,
+    pub verified: bool,
 }
 
 impl From<profiles::Model> for ProfileResponse {
@@ -26,6 +27,7 @@ impl From<profiles::Model> for ProfileResponse {
             first_name: model.first_name,
             last_name: model.last_name,
             household_id: model.household_id,
+            verified: model.verified,
         }
     }
 }
@@ -36,6 +38,7 @@ pub struct HouseholdResponse {
     #[schema(value_type = String)]
     pub id: Uuid,
     pub name: String,
+    pub address_text: String,
     #[schema(value_type = String, format = "date-time")]
     pub created_at: DateTime<Utc>,
 }
@@ -45,6 +48,7 @@ impl From<households::Model> for HouseholdResponse {
         Self {
             id: model.id,
             name: model.name,
+            address_text: model.address_text,
             created_at: model.created_at.into(),
         }
     }

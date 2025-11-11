@@ -2,5 +2,8 @@
 
 pub mod prelude;
 
+pub mod household_invite_codes;
 pub mod households;
+pub mod profile_verification_codes;
 pub mod profiles;
+pub mod sea_orm_active_enums;

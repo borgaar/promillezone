@@ -2,6 +2,10 @@ pub use sea_orm_migration::prelude::*;
 
 mod m20220101_000001_create_table;
 mod m20251109_224906_create_households;
+mod m20251110_200238_add_household_fields;
+mod m20251110_215513_add_household_invite_code;
+mod m20251110_222040_add_account_verification;
+mod m20251110_225922_add_profile_verification_code;
 
 pub struct Migrator;
 
@@ -11,6 +15,10 @@ impl MigratorTrait for Migrator {
         vec![
             Box::new(m20220101_000001_create_table::Migration),
             Box::new(m20251109_224906_create_households::Migration),
+            Box::new(m20251110_200238_add_household_fields::Migration),
+            Box::new(m20251110_215513_add_household_invite_code::Migration),
+            Box::new(m20251110_222040_add_account_verification::Migration),
+            Box::new(m20251110_225922_add_profile_verification_code::Migration),
         ]
     }
 }

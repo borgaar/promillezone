@@ -4,43 +4,30 @@ use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize)]
-#[sea_orm(table_name = "profiles")]
+#[sea_orm(table_name = "household_invite_codes")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
-    pub id: String,
-    #[sea_orm(unique)]
-    pub email: String,
-    pub created_at: DateTimeWithTimeZone,
-    pub updated_at: DateTimeWithTimeZone,
-    pub first_name: String,
-    pub last_name: String,
-    pub household_id: Option<Uuid>,
-    pub verified: bool,
+    pub code: String,
+    #[sea_orm(primary_key, auto_increment = false)]
+    pub household: Uuid,
+    pub expiration: DateTimeWithTimeZone,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
     #[sea_orm(
         belongs_to = "super::households::Entity",
-        from = "Column::HouseholdId",
+        from = "Column::Household",
         to = "super::households::Column::Id",
-        on_update = "NoAction",
-        on_delete = "NoAction"
+        on_update = "Cascade",
+        on_delete = "Cascade"
     )]
     Households,
-    #[sea_orm(has_many = "super::profile_verification_codes::Entity")]
-    ProfileVerificationCodes,
 }
 
 impl Related<super::households::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::Households.def()
-    }
-}
-
-impl Related<super::profile_verification_codes::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::ProfileVerificationCodes.def()
     }
 }
 
