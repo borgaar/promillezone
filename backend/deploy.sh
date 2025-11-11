@@ -19,6 +19,8 @@ docker build --build-arg CARGO_BUILD_JOBS=3 --no-cache -t $IMAGE_NAME .
 echo "-> Migrating database"
 cd migration
 cargo run --jobs 3 --release -- up
+rm -rf target
+cd -
 
 echo "-> Stopping and removing old container"
 docker rm -f $DOMAIN || true
