@@ -16,7 +16,6 @@ use crate::model::dto;
     paths(
         handlers::profile::get_profile,
         handlers::profile::create_profile,
-        handlers::profile::verify_profile,
         handlers::household::create_household,
         handlers::household::create_invite_code,
         handlers::household::join_household,
@@ -27,7 +26,6 @@ use crate::model::dto;
             dto::ProfileResponse,
             dto::HouseholdResponse,
             dto::CreateProfileRequest,
-            dto::VerifyProfileRequest,
             dto::CreateHouseholdRequest,
             dto::HouseholdType,
             dto::InviteCodeResponse,
@@ -39,7 +37,6 @@ use crate::model::dto;
             dto::ConflictError,
             dto::UserAlreadyInHouseholdError,
             dto::InternalServerError,
-            dto::ProfileNotVerifiedError,
             dto::NoHouseholdError
         )
     ),

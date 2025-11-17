@@ -29,6 +29,5 @@ tracing-subscriber = { version = "0.3.20", features = ["env-filter"] }
 utoipa = { version = "5.4.0", features = ["axum_extras"] }
 utoipa-scalar = { version = "0.3.0", features = ["axum"] }
 uuid = { version = "1.18.1", features = ["serde", "v4"] }
-resend-rs = "0.19.0"
 rand = "0.9.2"
 validator = { version = "0.20.0", features = ["derive"] }

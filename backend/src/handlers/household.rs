@@ -6,6 +6,7 @@ use validator::Validate;
 
 use crate::{
     AppState,
+    entity::prelude::*,
     entity::{household_invite_codes, households, profiles},
     middleware::firebase_auth::Claims,
     model::dto::{self, HouseholdResponse},
@@ -50,7 +51,7 @@ pub async fn create_household(
     })?;
 
     // Check if user already has a household
-    let existing_profile = profiles::Entity::find_by_id(&user_id)
+    let existing_profile = Profiles::find_by_id(&user_id)
         .one(&txn)
         .await
         .map_err(|e| {
@@ -128,7 +129,7 @@ pub async fn create_invite_code(
     let user_id = &claims.user_id;
 
     // Get user's profile
-    let profile = profiles::Entity::find_by_id(user_id)
+    let profile = Profiles::find_by_id(user_id)
         .one(&state.db)
         .await
         .map_err(|e| {
@@ -224,8 +225,8 @@ pub async fn join_household(
     })?;
 
     // Find valid invite code
-    let invite = household_invite_codes::Entity::find()
-        .filter(household_invite_codes::Column::Code.eq(&payload.code))
+    let invite = HouseholdInviteCodes::find()
+        .filter(household_invite_codes::Column::Code.eq(payload.code.clone()))
         .filter(household_invite_codes::Column::Expiration.gt(chrono::Utc::now()))
         .one(&txn)
         .await
@@ -239,7 +240,7 @@ pub async fn join_household(
         })?;
 
     // Get user's profile
-    let profile = profiles::Entity::find_by_id(user_id)
+    let profile = Profiles::find_by_id(user_id)
         .one(&txn)
         .await
         .map_err(|e| {
@@ -258,7 +259,7 @@ pub async fn join_household(
     }
 
     // Get household details
-    let household = households::Entity::find_by_id(invite.household)
+    let household = Households::find_by_id(invite.household)
         .one(&txn)
         .await
         .map_err(|e| {
@@ -293,7 +294,7 @@ pub async fn join_household(
     })?;
 
     // Maintenance: Clean up expired invite codes (best-effort)
-    household_invite_codes::Entity::delete_many()
+    HouseholdInviteCodes::delete_many()
         .filter(household_invite_codes::Column::Expiration.lt(chrono::Utc::now()))
         .exec(&state.db)
         .await
@@ -348,7 +349,7 @@ pub async fn leave_household(
     })?;
 
     // Get the user's profile
-    let mut profile: profiles::ActiveModel = profiles::Entity::find_by_id(user_id)
+    let mut profile: profiles::ActiveModel = Profiles::find_by_id(user_id)
         .one(&txn)
         .await
         .map_err(|e| {
@@ -370,7 +371,7 @@ pub async fn leave_household(
     })?;
 
     // Check if there are any remaining members in the household
-    let remaining_members = profiles::Entity::find()
+    let remaining_members = Profiles::find()
         .filter(profiles::Column::HouseholdId.eq(household_id))
         .count(&txn)
         .await
@@ -383,7 +384,7 @@ pub async fn leave_household(
     if remaining_members == 0 {
         tracing::info!("Deleting empty household {}", household_id);
 
-        households::Entity::delete_by_id(household_id)
+        Households::delete_by_id(household_id)
             .exec(&txn)
             .await
             .map_err(|e| {
