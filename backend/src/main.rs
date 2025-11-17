@@ -8,7 +8,6 @@ use axum::{
     Router,
     routing::{delete, get, post},
 };
-use resend_rs::Resend;
 use sea_orm::{Database, DatabaseConnection};
 use std::{net::SocketAddr, sync::Arc};
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
@@ -22,7 +21,6 @@ use crate::utils::openapi::ApiDoc;
 #[derive(Clone)]
 pub struct AppState {
     pub db: DatabaseConnection,
-    pub resend: Resend,
     pub firebase_auth: Arc<FirebaseAuth>,
 }
 
@@ -48,26 +46,15 @@ async fn main() {
 
     tracing::info!("Database connection established");
 
-    let resend_api_key = std::env::var("RESEND_API_KEY").expect("RESEND_API_KEY must be set");
-    let resend = Resend::new(&resend_api_key);
-
     let firebase_auth = Arc::new(FirebaseAuth::new());
     tracing::info!("Firebase authentication configured");
 
-    let state = AppState {
-        db,
-        resend,
-        firebase_auth,
-    };
+    let state = AppState { db, firebase_auth };
 
     // Protected routes
     let protected = Router::new()
         .route("/api/auth/profile", get(handlers::profile::get_profile))
         .route("/api/auth/profile", post(handlers::profile::create_profile))
-        .route(
-            "/api/auth/profile/verify",
-            post(handlers::profile::verify_profile),
-        )
         .route(
             "/api/household",
             post(handlers::household::create_household),

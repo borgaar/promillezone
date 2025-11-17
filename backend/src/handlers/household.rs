@@ -6,6 +6,7 @@ use validator::Validate;
 
 use crate::{
     AppState,
+    entity::prelude::*,
     entity::{household_invite_codes, households, profiles},
     middleware::firebase_auth::Claims,
     model::dto::{self, HouseholdResponse},
@@ -20,6 +21,7 @@ use crate::{
         (status = 200, description = "Household created successfully", body = HouseholdResponse),
         (status = 400, description = "Invalid request payload", body = dto::BadRequestError),
         (status = 401, description = "Unauthorized - Invalid or missing authentication token", body = dto::UnauthorizedError),
+        (status = 403, description = "Forbidden - You do not have permission to access this resource", body = dto::ForbiddenError),
         (status = 409, description = "User is already a member of a household", body = dto::UserAlreadyInHouseholdError),
         (status = 500, description = "Internal server error", body = dto::InternalServerError),
     ),
@@ -49,7 +51,7 @@ pub async fn create_household(
     })?;
 
     // Check if user already has a household
-    let existing_profile = profiles::Entity::find_by_id(&user_id)
+    let existing_profile = Profiles::find_by_id(&user_id)
         .one(&txn)
         .await
         .map_err(|e| {
@@ -112,6 +114,7 @@ pub async fn create_household(
         (status = 400, description = "User is not a member of any household", body = dto::BadRequestError),
         (status = 400, description = "User is not a part of a household", body = dto::NoHouseholdError),
         (status = 401, description = "Unauthorized - Invalid or missing authentication token", body = dto::UnauthorizedError),
+        (status = 403, description = "Forbidden - You do not have permission to access this resource", body = dto::ForbiddenError),
         (status = 404, description = "Profile not found", body = dto::NotFoundError),
         (status = 500, description = "Internal server error", body = dto::InternalServerError),
     ),
@@ -126,7 +129,7 @@ pub async fn create_invite_code(
     let user_id = &claims.user_id;
 
     // Get user's profile
-    let profile = profiles::Entity::find_by_id(user_id)
+    let profile = Profiles::find_by_id(user_id)
         .one(&state.db)
         .await
         .map_err(|e| {
@@ -182,6 +185,7 @@ pub async fn create_invite_code(
         (status = 200, description = "Successfully joined the household", body = HouseholdResponse),
         (status = 400, description = "Invalid code format, expired invite code, or invalid request payload", body = dto::BadRequestError),
         (status = 401, description = "Unauthorized - Invalid or missing authentication token", body = dto::UnauthorizedError),
+        (status = 403, description = "Forbidden - You do not have permission to access this resource", body = dto::ForbiddenError),
         (status = 404, description = "Profile not found", body = dto::NotFoundError),
         (status = 409, description = "User is already a member of a household", body = dto::UserAlreadyInHouseholdError),
         (status = 500, description = "Internal server error", body = dto::InternalServerError),
@@ -221,8 +225,8 @@ pub async fn join_household(
     })?;
 
     // Find valid invite code
-    let invite = household_invite_codes::Entity::find()
-        .filter(household_invite_codes::Column::Code.eq(&payload.code))
+    let invite = HouseholdInviteCodes::find()
+        .filter(household_invite_codes::Column::Code.eq(payload.code.clone()))
         .filter(household_invite_codes::Column::Expiration.gt(chrono::Utc::now()))
         .one(&txn)
         .await
@@ -236,7 +240,7 @@ pub async fn join_household(
         })?;
 
     // Get user's profile
-    let profile = profiles::Entity::find_by_id(user_id)
+    let profile = Profiles::find_by_id(user_id)
         .one(&txn)
         .await
         .map_err(|e| {
@@ -255,7 +259,7 @@ pub async fn join_household(
     }
 
     // Get household details
-    let household = households::Entity::find_by_id(invite.household)
+    let household = Households::find_by_id(invite.household)
         .one(&txn)
         .await
         .map_err(|e| {
@@ -290,7 +294,7 @@ pub async fn join_household(
     })?;
 
     // Maintenance: Clean up expired invite codes (best-effort)
-    household_invite_codes::Entity::delete_many()
+    HouseholdInviteCodes::delete_many()
         .filter(household_invite_codes::Column::Expiration.lt(chrono::Utc::now()))
         .exec(&state.db)
         .await
@@ -314,6 +318,7 @@ pub async fn join_household(
         (status = 200, description = "Successfully left the household"),
         (status = 400, description = "User is not a member of any household", body = dto::BadRequestError),
         (status = 401, description = "Unauthorized - Invalid or missing authentication token", body = dto::UnauthorizedError),
+        (status = 403, description = "Forbidden - You do not have permission to access this resource", body = dto::ForbiddenError),
         (status = 404, description = "Profile not found", body = dto::NotFoundError),
         (status = 500, description = "Internal server error", body = dto::InternalServerError),
     ),
@@ -344,7 +349,7 @@ pub async fn leave_household(
     })?;
 
     // Get the user's profile
-    let mut profile: profiles::ActiveModel = profiles::Entity::find_by_id(user_id)
+    let mut profile: profiles::ActiveModel = Profiles::find_by_id(user_id)
         .one(&txn)
         .await
         .map_err(|e| {
@@ -366,7 +371,7 @@ pub async fn leave_household(
     })?;
 
     // Check if there are any remaining members in the household
-    let remaining_members = profiles::Entity::find()
+    let remaining_members = Profiles::find()
         .filter(profiles::Column::HouseholdId.eq(household_id))
         .count(&txn)
         .await
@@ -379,7 +384,7 @@ pub async fn leave_household(
     if remaining_members == 0 {
         tracing::info!("Deleting empty household {}", household_id);
 
-        households::Entity::delete_by_id(household_id)
+        Households::delete_by_id(household_id)
             .exec(&txn)
             .await
             .map_err(|e| {

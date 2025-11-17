@@ -9,6 +9,10 @@ use utoipa::ToSchema;
 pub const UNAUTHORIZED_CODE: &str = "UNAUTHORIZED";
 pub const UNAUTHORIZED_MESSAGE: &str = "Unauthorized - Invalid or missing authentication token";
 
+pub const FORBIDDEN_CODE: &str = "FORBIDDEN";
+pub const FORBIDDEN_MESSAGE: &str =
+    "Forbidden - You do not have permission to access this resource";
+
 pub const NOT_FOUND_CODE: &str = "NOT_FOUND";
 pub const NOT_FOUND_MESSAGE: &str = "Not found";
 
@@ -23,9 +27,6 @@ pub const USER_ALREADY_IN_HOUSEHOLD_MESSAGE: &str = "User is already in a househ
 
 pub const INTERNAL_SERVER_ERROR_CODE: &str = "INTERNAL_SERVER_ERROR";
 pub const INTERNAL_SERVER_ERROR_MESSAGE: &str = "Internal server error";
-
-pub const PROFILE_NOT_VERIFIED_ERROR_CODE: &str = "PROFILE_NOT_VERIFIED";
-pub const PROFILE_NOT_VERIFIED_ERROR_MESSAGE: &str = "Profile is not verified";
 
 pub const NO_HOUSEHOLD_CODE: &str = "NO_HOUSEHOLD";
 pub const NO_HOUSEHOLD_MESSAGE: &str = "Profile does not belong to a household";
@@ -43,6 +44,16 @@ pub struct ErrorResponse {
     "message": UNAUTHORIZED_MESSAGE
 }))]
 pub struct UnauthorizedError {
+    pub code: String,
+    pub message: String,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+#[schema(example = json!({
+    "code": FORBIDDEN_CODE,
+    "message": FORBIDDEN_MESSAGE
+}))]
+pub struct ForbiddenError {
     pub code: String,
     pub message: String,
 }
@@ -99,16 +110,6 @@ pub struct UserAlreadyInHouseholdError {
 
 #[derive(Debug, Serialize, ToSchema)]
 #[schema(example = json!({
-    "code": PROFILE_NOT_VERIFIED_ERROR_CODE,
-    "message": PROFILE_NOT_VERIFIED_ERROR_MESSAGE
-}))]
-pub struct ProfileNotVerifiedError {
-    pub code: String,
-    pub message: String,
-}
-
-#[derive(Debug, Serialize, ToSchema)]
-#[schema(example = json!({
     "code": NO_HOUSEHOLD_CODE,
     "message": NO_HOUSEHOLD_MESSAGE
 }))]
@@ -136,6 +137,17 @@ impl ErrorResponse {
             axum::Json(ErrorResponse {
                 code: UNAUTHORIZED_CODE.to_string(),
                 message: UNAUTHORIZED_MESSAGE.to_string(),
+            }),
+        )
+            .into_response()
+    }
+
+    pub fn forbidden() -> Response {
+        (
+            StatusCode::FORBIDDEN,
+            axum::Json(ErrorResponse {
+                code: FORBIDDEN_CODE.to_string(),
+                message: FORBIDDEN_MESSAGE.to_string(),
             }),
         )
             .into_response()
@@ -180,17 +192,6 @@ impl ErrorResponse {
             axum::Json(ErrorResponse {
                 code: CONFLICT_CODE.to_string(),
                 message: message.unwrap_or(CONFLICT_MESSAGE).to_string(),
-            }),
-        )
-            .into_response()
-    }
-
-    pub fn profile_not_verified() -> Response {
-        (
-            StatusCode::FORBIDDEN,
-            axum::Json(ErrorResponse {
-                code: PROFILE_NOT_VERIFIED_ERROR_CODE.to_string(),
-                message: PROFILE_NOT_VERIFIED_ERROR_MESSAGE.to_string(),
             }),
         )
             .into_response()

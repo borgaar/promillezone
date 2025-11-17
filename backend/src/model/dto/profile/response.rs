@@ -15,8 +15,6 @@ pub struct ProfileResponse {
     pub last_name: String,
     #[schema(example = "john.doe@example.com")]
     pub email: String,
-    #[schema(example = true)]
-    pub verified: bool,
     #[schema(value_type = Option<String>, format = "uuid", example = "550e8400-e29b-41d4-a716-446655440000")]
     pub household_id: Option<Uuid>,
     #[schema(value_type = String, format = "date-time")]
@@ -32,7 +30,6 @@ impl From<profiles::Model> for ProfileResponse {
             first_name: profile.first_name,
             last_name: profile.last_name,
             email: profile.email,
-            verified: profile.verified,
             household_id: profile.household_id,
             created_at: profile.created_at.into(),
             updated_at: profile.updated_at.into(),
