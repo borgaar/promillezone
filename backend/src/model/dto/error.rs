@@ -9,6 +9,10 @@ use utoipa::ToSchema;
 pub const UNAUTHORIZED_CODE: &str = "UNAUTHORIZED";
 pub const UNAUTHORIZED_MESSAGE: &str = "Unauthorized - Invalid or missing authentication token";
 
+pub const FORBIDDEN_CODE: &str = "FORBIDDEN";
+pub const FORBIDDEN_MESSAGE: &str =
+    "Forbidden - You do not have permission to access this resource";
+
 pub const NOT_FOUND_CODE: &str = "NOT_FOUND";
 pub const NOT_FOUND_MESSAGE: &str = "Not found";
 
@@ -43,6 +47,16 @@ pub struct ErrorResponse {
     "message": UNAUTHORIZED_MESSAGE
 }))]
 pub struct UnauthorizedError {
+    pub code: String,
+    pub message: String,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+#[schema(example = json!({
+    "code": FORBIDDEN_CODE,
+    "message": FORBIDDEN_MESSAGE
+}))]
+pub struct ForbiddenError {
     pub code: String,
     pub message: String,
 }
@@ -136,6 +150,17 @@ impl ErrorResponse {
             axum::Json(ErrorResponse {
                 code: UNAUTHORIZED_CODE.to_string(),
                 message: UNAUTHORIZED_MESSAGE.to_string(),
+            }),
+        )
+            .into_response()
+    }
+
+    pub fn forbidden() -> Response {
+        (
+            StatusCode::FORBIDDEN,
+            axum::Json(ErrorResponse {
+                code: FORBIDDEN_CODE.to_string(),
+                message: FORBIDDEN_MESSAGE.to_string(),
             }),
         )
             .into_response()

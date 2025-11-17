@@ -15,9 +15,9 @@ use crate::{AppState, middleware::firebase_auth::Claims};
     description = "Get the profile of the authenticated user. Returns the user's profile information if they are verified.",
     responses(
         (status = 200, description = "User profile retrieved successfully", body = ProfileResponse),
-        (status = 403, description = "Forbidden - Profile exists but is not verified", body = dto::ProfileNotVerifiedError),
-        (status = 404, description = "Profile not found - User needs to create a profile first", body = dto::NotFoundError),
         (status = 401, description = "Unauthorized - Invalid or missing authentication token", body = dto::UnauthorizedError),
+        (status = 403, description = "Forbidden - You do not have permission to access this resource", body = dto::ForbiddenError),
+        (status = 404, description = "Profile not found - User needs to create a profile first", body = dto::NotFoundError),
         (status = 500, description = "Internal server error", body = dto::InternalServerError),
     ),
     security(
@@ -58,9 +58,10 @@ pub async fn get_profile(
     tag = "profile",
     description = "Create a profile for the authenticated user. Sends a 6-digit verification code to the user's email address.",
     responses(
-        (status = 200, description = "Profile created successfully - Verification email sent", body = ProfileResponse),
+        (status = 200, description = "Profile created successfully", body = ProfileResponse),
         (status = 400, description = "Invalid request payload or email not provided in token claims", body = dto::BadRequestError),
         (status = 401, description = "Unauthorized - Invalid or missing authentication token", body = dto::UnauthorizedError),
+        (status = 403, description = "Forbidden - You do not have permission to access this resource", body = dto::ForbiddenError),
         (status = 409, description = "Profile already exists for this user", body = dto::ConflictError),
         (status = 500, description = "Internal server error", body = dto::InternalServerError),
     ),
@@ -177,6 +178,7 @@ pub async fn create_profile(
         (status = 200, description = "Profile verified successfully", body = ProfileResponse),
         (status = 400, description = "Invalid verification code format, expired code, or invalid request payload", body = dto::BadRequestError),
         (status = 401, description = "Unauthorized - Invalid or missing authentication token", body = dto::UnauthorizedError),
+        (status = 403, description = "Forbidden - You do not have permission to access this resource", body = dto::ForbiddenError),
         (status = 404, description = "Profile not found", body = dto::NotFoundError),
         (status = 500, description = "Internal server error", body = dto::InternalServerError),
     ),

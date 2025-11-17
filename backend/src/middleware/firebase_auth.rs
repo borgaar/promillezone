@@ -236,6 +236,11 @@ pub async fn authenticate(
         return dto::ErrorResponse::unauthorized();
     }
 
+    if token_data.claims.email_verified != Some(true) {
+        tracing::warn!("Email not verified for user_id: {}", token_data.claims.sub);
+        return dto::ErrorResponse::unauthorized();
+    }
+
     // Insert claims into request extensions for downstream handlers
     req.extensions_mut().insert(token_data.claims);
     next.run(req).await
