@@ -6,6 +6,7 @@ mod m20251110_200238_add_household_fields;
 mod m20251110_215513_add_household_invite_code;
 mod m20251110_222040_add_account_verification;
 mod m20251110_225922_add_profile_verification_code;
+mod m20251117_153027_remove_email_verification;
 
 pub struct Migrator;
 
@@ -19,6 +20,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20251110_215513_add_household_invite_code::Migration),
             Box::new(m20251110_222040_add_account_verification::Migration),
             Box::new(m20251110_225922_add_profile_verification_code::Migration),
+            Box::new(m20251117_153027_remove_email_verification::Migration),
         ]
     }
 }
