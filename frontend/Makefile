@@ -20,3 +20,27 @@ generate_api:
 
 	# Run build_runner to generate rest of the code
 	cd packages/promille_zone && dart run build_runner build --delete-conflicting-outputs
+
+# Build for Raspberry Pi (ARM64)
+build_pi:
+	@echo "Building Flutter app for Raspberry Pi (ARM64)..."
+
+	# Build Docker image and create container
+	docker buildx build --platform linux/arm64 -f Dockerfile.pi -t promillezone-pi-builder --load .
+
+	# Create output directory
+	mkdir -p build/pi
+
+	# Extract binary from container
+	@echo "Extracting binary to build/pi/..."
+	docker create --name promillezone-pi-temp promillezone-pi-builder
+	docker cp promillezone-pi-temp:/app/build/linux/arm64/release/bundle/. build/pi/
+	docker rm promillezone-pi-temp
+
+	@echo "Build complete! Binary available in build/pi/"
+	@echo "Copy the entire build/pi/ directory to your Raspberry Pi and run ./promillezone"
+
+# Clean Pi build artifacts
+clean_pi:
+	rm -rf build/pi
+	docker rmi promillezone-pi-builder 2>/dev/null || true

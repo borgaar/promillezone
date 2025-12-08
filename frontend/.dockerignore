@@ -1,0 +1,30 @@
+# Git
+.git
+.gitignore
+
+# Build outputs
+build/
+*.so
+*.dylib
+*.dll
+*.exe
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Dependencies
+.dart_tool/
+.packages
+
+# Misc
+.DS_Store
+*.log
+
+# Documentation
+README.md
+LICENSE
+docs/

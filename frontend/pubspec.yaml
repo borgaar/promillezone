@@ -18,8 +18,13 @@ dependencies:
   firebase_core: ^4.2.1
   firebase_auth: ^6.1.2
   dio: ^5.9.0
+  flutter_dotenv: ^5.2.1
+  intl: ^0.19.0
   promille_zone_api:
     path: packages/promille_zone
+  bloc: ^9.1.0
+  flutter_layout_grid: ^2.0.8
+  cron: ^0.6.2
 
 dev_dependencies:
   flutter_test:
@@ -29,3 +34,124 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  assets:
+    - .env
+
+  fonts:
+    - family: ComicNeue
+      fonts:
+        - asset: asset/font/comic-neue/ComicNeue-Light.ttf
+          weight: 300
+        - asset: asset/font/comic-neue/ComicNeue-LightItalic.ttf
+          weight: 300
+          style: italic
+        - asset: asset/font/comic-neue/ComicNeue-Regular.ttf
+          weight: 400
+        - asset: asset/font/comic-neue/ComicNeue-Italic.ttf
+          weight: 400
+          style: italic
+        - asset: asset/font/comic-neue/ComicNeue-Bold.ttf
+          weight: 700
+        - asset: asset/font/comic-neue/ComicNeue-BoldItalic.ttf
+          weight: 700
+          style: italic
+
+    - family: SourceSerif
+      fonts:
+        - asset: asset/font/source-serif/SourceSerif4_18pt-ExtraLight.ttf
+          weight: 200
+        - asset: asset/font/source-serif/SourceSerif4_18pt-ExtraLightItalic.ttf
+          weight: 200
+          style: italic
+        - asset: asset/font/source-serif/SourceSerif4_18pt-Light.ttf
+          weight: 300
+        - asset: asset/font/source-serif/SourceSerif4_18pt-LightItalic.ttf
+          weight: 300
+          style: italic
+        - asset: asset/font/source-serif/SourceSerif4_18pt-Regular.ttf
+          weight: 400
+        - asset: asset/font/source-serif/SourceSerif4_18pt-Italic.ttf
+          weight: 400
+          style: italic
+        - asset: asset/font/source-serif/SourceSerif4_18pt-Medium.ttf
+          weight: 500
+        - asset: asset/font/source-serif/SourceSerif4_18pt-MediumItalic.ttf
+          weight: 500
+          style: italic
+        - asset: asset/font/source-serif/SourceSerif4_18pt-Bold.ttf
+          weight: 700
+        - asset: asset/font/source-serif/SourceSerif4_18pt-BoldItalic.ttf
+          weight: 700
+          style: italic
+        - asset: asset/font/source-serif/SourceSerif4_18pt-ExtraBold.ttf
+          weight: 800
+        - asset: asset/font/source-serif/SourceSerif4_18pt-ExtraBoldItalic.ttf
+          weight: 800
+          style: italic
+
+    - family: Inter
+      fonts:
+        - asset: asset/font/inter/Inter_18pt-ExtraLight.ttf
+          weight: 200
+        - asset: asset/font/inter/Inter_18pt-ExtraLightItalic.ttf
+          weight: 200
+          style: italic
+        - asset: asset/font/inter/Inter_18pt-Light.ttf
+          weight: 300
+        - asset: asset/font/inter/Inter_18pt-LightItalic.ttf
+          weight: 300
+          style: italic
+        - asset: asset/font/inter/Inter_18pt-Regular.ttf
+          weight: 400
+        - asset: asset/font/inter/Inter_18pt-Italic.ttf
+          weight: 400
+          style: italic
+        - asset: asset/font/inter/Inter_18pt-Medium.ttf
+          weight: 500
+        - asset: asset/font/inter/Inter_18pt-MediumItalic.ttf
+          weight: 500
+          style: italic
+        - asset: asset/font/inter/Inter_18pt-Bold.ttf
+          weight: 700
+        - asset: asset/font/inter/Inter_18pt-BoldItalic.ttf
+          weight: 700
+          style: italic
+        - asset: asset/font/inter/Inter_18pt-ExtraBold.ttf
+          weight: 800
+        - asset: asset/font/inter/Inter_18pt-ExtraBoldItalic.ttf
+          weight: 800
+          style: italic
+
+    - family: JetBrainsMono
+      fonts:
+        - asset: asset/font/jetbrains-mono/JetBrainsMono-ExtraLight.ttf
+          weight: 200
+        - asset: asset/font/jetbrains-mono/JetBrainsMono-ExtraLightItalic.ttf
+          weight: 200
+          style: italic
+        - asset: asset/font/jetbrains-mono/JetBrainsMono-Light.ttf
+          weight: 300
+        - asset: asset/font/jetbrains-mono/JetBrainsMono-LightItalic.ttf
+          weight: 300
+          style: italic
+        - asset: asset/font/jetbrains-mono/JetBrainsMono-Medium.ttf
+          weight: 400
+        - asset: asset/font/jetbrains-mono/JetBrainsMono-Italic.ttf
+          weight: 400
+          style: italic
+        - asset: asset/font/jetbrains-mono/JetBrainsMono-Medium.ttf
+          weight: 500
+        - asset: asset/font/jetbrains-mono/JetBrainsMono-MediumItalic.ttf
+          weight: 500
+          style: italic
+        - asset: asset/font/jetbrains-mono/JetBrainsMono-Bold.ttf
+          weight: 700
+        - asset: asset/font/jetbrains-mono/JetBrainsMono-BoldItalic.ttf
+          weight: 700
+          style: italic
+        - asset: asset/font/jetbrains-mono/JetBrainsMono-ExtraBold.ttf
+          weight: 800
+        - asset: asset/font/jetbrains-mono/JetBrainsMono-ExtraBoldItalic.ttf
+          weight: 800
+          style: italic
