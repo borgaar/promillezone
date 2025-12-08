@@ -1,6 +1,7 @@
 use axum::{Extension, Json, extract::State, response::Response};
 use sea_orm::{
-    ActiveModelTrait, ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter, Set, TransactionTrait,
+    ActiveModelTrait, ColumnTrait, ConnectionTrait, EntityTrait, PaginatorTrait, QueryFilter, Set,
+    TransactionTrait,
 };
 use validator::Validate;
 
@@ -313,7 +314,7 @@ pub async fn join_household(
     delete,
     path = "/api/household/leave",
     tag = "household",
-    description = "Leave your current household. If you are the last member, the household will be automatically deleted along with any associated invite codes.",
+    description = "Leave your current household. If you are the last member, the household will be automatically deleted along with any associated data.",
     responses(
         (status = 200, description = "Successfully left the household"),
         (status = 400, description = "User is not a member of any household", body = dto::BadRequestError),
@@ -370,28 +371,34 @@ pub async fn leave_household(
         dto::ErrorResponse::internal_server_error()
     })?;
 
-    // Check if there are any remaining members in the household
-    let remaining_members = Profiles::find()
-        .filter(profiles::Column::HouseholdId.eq(household_id))
-        .count(&txn)
+    // Atomically delete the household if no members remain
+    let delete_result = txn
+        .execute(sea_orm::Statement::from_sql_and_values(
+            sea_orm::DatabaseBackend::Postgres,
+            r#"
+                DELETE FROM households
+                WHERE id = $1
+                AND NOT EXISTS (
+                    SELECT 1 FROM profiles WHERE household_id = $1
+                )
+                "#,
+            vec![household_id.into()],
+        ))
         .await
         .map_err(|e| {
-            tracing::error!("Failed to count household members: {}", e);
+            tracing::error!("Failed to conditionally delete household: {}", e);
             dto::ErrorResponse::internal_server_error()
         })?;
 
-    // If no members left, delete the household (cascade will delete invite codes)
-    if remaining_members == 0 {
-        tracing::info!("Deleting empty household {}", household_id);
-
-        Households::delete_by_id(household_id)
-            .exec(&txn)
-            .await
-            .map_err(|e| {
-                tracing::error!("Failed to delete household: {}", e);
-                dto::ErrorResponse::internal_server_error()
-            })?;
+    if delete_result.rows_affected() > 0 {
+        tracing::info!("Deleted empty household {}", household_id);
     } else {
+        // Get the current remaining member count for logging
+        let remaining_members = Profiles::find()
+            .filter(profiles::Column::HouseholdId.eq(household_id))
+            .count(&txn)
+            .await
+            .unwrap_or(0);
         tracing::info!(
             "User {} left household {} ({} members remaining)",
             user_id,
