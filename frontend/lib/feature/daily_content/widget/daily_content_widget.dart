@@ -21,8 +21,8 @@ class DailyContentWidget extends StatelessWidget {
         builder: (context, state) {
           return switch (state) {
             DailyContentInitial() => SizedBox.expand(),
-            DailyContentFailure(:final errorMessage) => const Center(
-              child: Text("Failed to load daily content"),
+            DailyContentFailure(:final errorMessage) => Center(
+              child: Text("Failed to load daily content: $errorMessage"),
             ),
             DailyContentSuccess(:final joke, :final quote, :final cat) => Row(
               children: [

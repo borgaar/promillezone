@@ -46,6 +46,7 @@ class TimeWidget extends StatelessWidget {
           };
 
           return Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
                 '${snapshot.data!.hour.toString().padLeft(2, '0')}:${snapshot.data!.minute.toString().padLeft(2, '0')}:${snapshot.data!.second.toString().padLeft(2, '0')}',
