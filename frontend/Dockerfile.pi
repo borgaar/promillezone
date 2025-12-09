@@ -1,5 +1,5 @@
 # Dockerfile for building Flutter Linux app for Raspberry Pi (ARM64)
-FROM --platform=linux/arm64 debian:bookworm-slim
+FROM --platform=linux/arm64 debian:bookworm-slim AS deps
 
 # Install dependencies
 RUN apt-get update && apt-get install -y \
@@ -26,6 +26,8 @@ RUN git clone https://github.com/flutter/flutter.git -b stable --depth 1 $FLUTTE
     flutter precache --linux && \
     flutter config --enable-linux-desktop && \
     flutter doctor
+
+FROM deps AS builder
 
 # Set working directory
 WORKDIR /app
