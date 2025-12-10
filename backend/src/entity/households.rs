@@ -3,7 +3,7 @@
 use super::sea_orm_active_enums::HouseholdType;
 use sea_orm::entity::prelude::*;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
+#[derive(Clone, Debug, PartialEq, DeriveEntityModel)]
 #[sea_orm(table_name = "households")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
@@ -13,6 +13,10 @@ pub struct Model {
     pub updated_at: DateTimeWithTimeZone,
     pub address_text: String,
     pub household_type: HouseholdType,
+    #[sea_orm(column_type = "Float")]
+    pub lat: f32,
+    #[sea_orm(column_type = "Float")]
+    pub lon: f32,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

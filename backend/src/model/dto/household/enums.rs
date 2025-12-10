@@ -4,6 +4,7 @@ use utoipa::ToSchema;
 /// Household type for API requests and responses
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 #[serde(rename_all = "lowercase")]
+#[schema(example = "family")]
 pub enum HouseholdType {
     #[schema(rename = "family")]
     Family,

@@ -103,9 +103,11 @@ pub async fn create_profile(
     let new_profile = profiles::ActiveModel {
         id: Set(claims.user_id.clone()),
         email: Set(email),
-        first_name: Set(payload.first_name.clone()),
-        last_name: Set(payload.last_name.clone()),
-        ..Default::default()
+        first_name: Set(payload.first_name),
+        last_name: Set(payload.last_name),
+        created_at: Default::default(),
+        household_id: Default::default(),
+        updated_at: Default::default(),
     };
 
     let profile = new_profile.insert(&state.db).await.map_err(|e| {

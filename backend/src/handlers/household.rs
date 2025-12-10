@@ -79,7 +79,11 @@ pub async fn create_household(
         name: Set(payload.name),
         address_text: Set(payload.address_text),
         household_type: Set(payload.household_type.into()),
-        ..Default::default()
+        created_at: Default::default(),
+        lat: Set(payload.coordinates.lat),
+        lon: Set(payload.coordinates.lat),
+        id: Default::default(),
+        updated_at: Default::default(),
     };
 
     let household = new_household.insert(&txn).await.map_err(|e| {
@@ -162,7 +166,7 @@ pub async fn create_invite_code(
     let invite_code = household_invite_codes::ActiveModel {
         code: Set(code.clone()),
         household: Set(household_id),
-        ..Default::default()
+        expiration: Default::default(),
     };
 
     let created_code = invite_code.insert(&state.db).await.map_err(|e| {

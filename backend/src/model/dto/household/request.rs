@@ -2,6 +2,8 @@ use serde::Deserialize;
 use utoipa::ToSchema;
 use validator::Validate;
 
+use crate::model::dto::Coordinates;
+
 use super::enums::HouseholdType;
 
 #[derive(Debug, Deserialize, Validate, ToSchema)]
@@ -14,6 +16,7 @@ pub struct CreateHouseholdRequest {
     pub address_text: String,
     #[schema(example = "family")]
     pub household_type: HouseholdType,
+    pub coordinates: Coordinates,
 }
 
 #[derive(Debug, Deserialize, Validate, ToSchema)]

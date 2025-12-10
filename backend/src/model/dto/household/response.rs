@@ -3,7 +3,7 @@ use serde::Serialize;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::entity::households;
+use crate::{entity::households, model::dto::Coordinates};
 
 use super::enums::HouseholdType;
 
@@ -15,8 +15,8 @@ pub struct HouseholdResponse {
     pub name: String,
     #[schema(example = "123 Main St, Springfield")]
     pub address_text: String,
-    #[schema(example = "family")]
     pub household_type: HouseholdType,
+    pub coordinates: Coordinates,
     #[schema(value_type = String, format = "date-time")]
     pub created_at: DateTime<Utc>,
     #[schema(value_type = String, format = "date-time")]
@@ -30,6 +30,10 @@ impl From<households::Model> for HouseholdResponse {
             name: household.name,
             address_text: household.address_text,
             household_type: household.household_type.into(),
+            coordinates: Coordinates {
+                lat: household.lat,
+                lon: household.lon,
+            },
             created_at: household.created_at.into(),
             updated_at: household.updated_at.into(),
         }
