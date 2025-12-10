@@ -164,6 +164,10 @@ impl FirebaseAuth {
 
         tracing::info!("Successfully fetched and cached {} Firebase public keys", decoding_keys.len());
 
+        for kid in decoding_keys.keys() {
+            tracing::info!("Firebase key kid in cache: {}", kid);
+        }
+
         // Update cache
         cache.keys = Some(decoding_keys.clone());
         cache.expiry = SystemTime::now() + std::time::Duration::from_secs(cache_duration);
