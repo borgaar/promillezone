@@ -5,12 +5,13 @@ use validator::Validate;
 use crate::entity::prelude::*;
 use crate::entity::profiles;
 use crate::model::dto::{self, ProfileResponse};
+use crate::utils::openapi::ScalarTags;
 use crate::{AppState, middleware::firebase_auth::Claims};
 
 #[utoipa::path(
     get,
     path = "/api/auth/profile",
-    tag = "profile",
+    tag = ScalarTags::PROFILE,
     description = "Get the profile of the authenticated user. Returns the user's profile information if they are verified.",
     responses(
         (status = 200, description = "User profile retrieved successfully", body = ProfileResponse),
@@ -19,9 +20,6 @@ use crate::{AppState, middleware::firebase_auth::Claims};
         (status = 404, description = "Profile not found - User needs to create a profile first", body = dto::NotFoundError),
         (status = 500, description = "Internal server error", body = dto::InternalServerError),
     ),
-    security(
-        ("bearerAuth" = [])
-    )
 )]
 pub async fn get_profile(
     State(state): State<AppState>,
@@ -49,7 +47,7 @@ pub async fn get_profile(
 #[utoipa::path(
     post,
     path = "/api/auth/profile",
-    tag = "profile",
+    tag = ScalarTags::PROFILE,
     description = "Create a profile for the authenticated user. Email must be present in JWT claims.",
     responses(
         (status = 200, description = "Profile created successfully", body = ProfileResponse),
@@ -60,9 +58,6 @@ pub async fn get_profile(
         (status = 500, description = "Internal server error", body = dto::InternalServerError),
     ),
     request_body = dto::CreateProfileRequest,
-    security(
-        ("bearerAuth" = [])
-    )
 )]
 pub async fn create_profile(
     State(state): State<AppState>,

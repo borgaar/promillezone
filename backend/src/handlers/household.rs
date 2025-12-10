@@ -7,16 +7,16 @@ use validator::Validate;
 
 use crate::{
     AppState,
-    entity::prelude::*,
-    entity::{household_invite_codes, households, profiles},
+    entity::{household_invite_codes, households, prelude::*, profiles},
     middleware::firebase_auth::Claims,
     model::dto::{self, HouseholdResponse},
+    utils::openapi::ScalarTags,
 };
 
 #[utoipa::path(
     post,
     path = "/api/household",
-    tag = "household",
+    tag = ScalarTags::HOUSEHOLD,
     description = "Create a new household with the authenticated user as the first member. Requires name, address, and household type (family, dorm, or other).",
     responses(
         (status = 200, description = "Household created successfully", body = HouseholdResponse),
@@ -27,9 +27,6 @@ use crate::{
         (status = 500, description = "Internal server error", body = dto::InternalServerError),
     ),
     request_body = dto::CreateHouseholdRequest,
-    security(
-        ("bearerAuth" = [])
-    )
 )]
 pub async fn create_household(
     State(state): State<AppState>,
@@ -112,7 +109,7 @@ pub async fn create_household(
 #[utoipa::path(
     post,
     path = "/api/household/invite",
-    tag = "household",
+    tag = ScalarTags::HOUSEHOLD,
     description = "Generate a 6-digit numeric invite code for your household. The code expires in 1 hour and can only be used once. User must be part of a household.",
     responses(
         (status = 200, description = "Invite code created successfully", body = dto::InviteCodeResponse),
@@ -123,9 +120,6 @@ pub async fn create_household(
         (status = 404, description = "Profile not found", body = dto::NotFoundError),
         (status = 500, description = "Internal server error", body = dto::InternalServerError),
     ),
-    security(
-        ("bearerAuth" = [])
-    )
 )]
 pub async fn create_invite_code(
     State(state): State<AppState>,
@@ -184,7 +178,7 @@ pub async fn create_invite_code(
 #[utoipa::path(
     post,
     path = "/api/household/join",
-    tag = "household",
+    tag = ScalarTags::HOUSEHOLD,
     description = "Join a household using a 6-digit numeric invite code. The code must be valid and not expired. Users can only be in one household at a time.",
     responses(
         (status = 200, description = "Successfully joined the household", body = HouseholdResponse),
@@ -196,9 +190,6 @@ pub async fn create_invite_code(
         (status = 500, description = "Internal server error", body = dto::InternalServerError),
     ),
     request_body = dto::JoinHouseholdRequest,
-    security(
-        ("bearerAuth" = [])
-    )
 )]
 pub async fn join_household(
     State(state): State<AppState>,
@@ -317,7 +308,7 @@ pub async fn join_household(
 #[utoipa::path(
     delete,
     path = "/api/household/leave",
-    tag = "household",
+    tag = ScalarTags::HOUSEHOLD,
     description = "Leave your current household. If you are the last member, the household will be automatically deleted along with any associated data.",
     responses(
         (status = 200, description = "Successfully left the household"),
@@ -327,9 +318,6 @@ pub async fn join_household(
         (status = 404, description = "Profile not found", body = dto::NotFoundError),
         (status = 500, description = "Internal server error", body = dto::InternalServerError),
     ),
-    security(
-        ("bearerAuth" = [])
-    )
 )]
 pub async fn leave_household(
     State(state): State<AppState>,

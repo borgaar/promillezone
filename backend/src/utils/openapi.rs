@@ -1,7 +1,12 @@
 use utoipa::OpenApi;
 
 use crate::handlers;
-use crate::model::dto;
+
+pub struct ScalarTags;
+impl ScalarTags {
+    pub const HOUSEHOLD: &str = "Household";
+    pub const PROFILE: &str = "Profile";
+}
 
 #[derive(OpenApi)]
 #[openapi(
@@ -21,29 +26,10 @@ use crate::model::dto;
         handlers::household::join_household,
         handlers::household::leave_household,
     ),
-    components(
-        schemas(
-            dto::ProfileResponse,
-            dto::HouseholdResponse,
-            dto::CreateProfileRequest,
-            dto::CreateHouseholdRequest,
-            dto::HouseholdType,
-            dto::InviteCodeResponse,
-            dto::JoinHouseholdRequest,
-            dto::ErrorResponse,
-            dto::UnauthorizedError,
-            dto::NotFoundError,
-            dto::BadRequestError,
-            dto::ConflictError,
-            dto::UserAlreadyInHouseholdError,
-            dto::InternalServerError,
-            dto::NoHouseholdError
-        )
-    ),
     modifiers(&SecurityAddon),
     tags(
-        (name = "profile", description = "Profile management endpoints"),
-        (name = "household", description = "Household management endpoints")
+        (name = ScalarTags::PROFILE, description = "Endpoints for managing the user's profile."),
+        (name = ScalarTags::HOUSEHOLD, description = "Endpoints for managing the user's assigned household.")
     )
 )]
 pub struct ApiDoc;
