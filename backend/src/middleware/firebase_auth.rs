@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, time::SystemTime};
 use tokio::sync::RwLock;
 
-use crate::model::dto;
+use crate::model::dto::{self, error::{ToHttpResponse, internal_server_error, unauthorized}};
 
 pub struct FirebaseAuth {
     firebase_key_url: String,
@@ -194,29 +194,30 @@ pub async fn authenticate(
         .and_then(|h| h.to_str().ok())
         .and_then(|h| h.strip_prefix("Bearer "))
     else {
-        return dto::error::ErrorResponse::unauthorized();
+        tracing::error!("Missing or malformed Authorization header");
+        return unauthorized::UnauthorizedError::to_response();
     };
 
     // Get Firebase signing keys
     let Ok(keys) = state.firebase_auth.get_keys().await else {
         tracing::error!("Failed to get Firebase Auth signing keys");
-        return dto::error::ErrorResponse::internal_server_error();
+        return internal_server_error::InternalServerError::to_response();
     };
 
     // Decode token header and get key ID used for signing
     let Ok(header) = jsonwebtoken::decode_header(token) else {
         tracing::error!("Failed to decode JWT header");
-        return dto::error::ErrorResponse::unauthorized();
+        return unauthorized::UnauthorizedError::to_response();
     };
     
     let Some(kid) = header.kid else {
         tracing::error!("JWT header missing key ID (kid)");
-        return dto::error::ErrorResponse::unauthorized();
+        return unauthorized::UnauthorizedError::to_response();
     };
     
     let Some(decoding_key) = keys.get(&kid) else {
         tracing::error!("No matching Firebase public key found for kid: {}", kid);
-        return dto::error::ErrorResponse::unauthorized();
+        return unauthorized::UnauthorizedError::to_response();
     };
 
     // Validate token claims
@@ -231,18 +232,18 @@ pub async fn authenticate(
         Ok(data) => data,
         Err(e) => {
             tracing::error!("Failed to validate JWT: {}", e);
-            return dto::error::ErrorResponse::unauthorized();
+            return unauthorized::UnauthorizedError::to_response();
         }
     };
 
     if token_data.claims.sub.is_empty() {
         tracing::error!("JWT subject (sub) claim is empty");
-        return dto::error::ErrorResponse::unauthorized();
+        return unauthorized::UnauthorizedError::to_response();
     }
 
     if token_data.claims.email_verified != Some(true) {
         tracing::error!("Email not verified for user_id: {}", token_data.claims.sub);
-        return dto::error::ErrorResponse::forbidden();
+        return dto::error::email_not_verified::EmailNotVerifiedError::to_response();
     }
 
     // Insert claims into request extensions for downstream handlers

@@ -50,7 +50,7 @@ impl utoipa::Modify for SecurityAddon {
                     utoipa::openapi::security::HttpBuilder::new()
                         .scheme(utoipa::openapi::security::HttpAuthScheme::Bearer)
                         .bearer_format("JWT")
-                        .description(Some("Firebase JWT token authentication"))
+                        .description(Some("Firebase JWT authentication"))
                         .build(),
                 ),
             );

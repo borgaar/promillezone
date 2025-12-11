@@ -4,6 +4,7 @@ use validator::Validate;
 
 use crate::entity::prelude::*;
 use crate::entity::profiles;
+use crate::model::dto::error::*;
 use crate::model::dto::{self};
 use crate::utils::openapi::ApiTags;
 use crate::{AppState, middleware::firebase_auth::Claims};
@@ -12,13 +13,12 @@ use crate::{AppState, middleware::firebase_auth::Claims};
     get,
     path = "/api/auth/profile",
     tag = ApiTags::PROFILE,
-    description = "Get the profile of the authenticated user. Returns the user's profile information if they are verified.",
+    description = "Get the profile of the authenticated user. User must have a profile.",
     responses(
-        (status = 200, description = "User profile retrieved successfully", body = dto::profile::response::ProfileResponse),
-        (status = 401, description = "Unauthorized - Invalid or missing authentication token", body = dto::error::UnauthorizedError),
-        (status = 403, description = "Forbidden - You do not have permission to access this resource", body = dto::error::ForbiddenError),
-        (status = 404, description = "Profile not found - User needs to create a profile first", body = dto::error::NotFoundError),
-        (status = 500, description = "Internal server error", body = dto::error::InternalServerError),
+        (status = StatusCode::OK, description = "User profile retrieved successfully", body = dto::profile::response::ProfileResponse),
+        (status = StatusCode::UNAUTHORIZED, description = unauthorized::DESCRIPTION, body = unauthorized::UnauthorizedError),
+        (status = StatusCode::CONFLICT, description = no_user_profile::DESCRIPTION, body = no_user_profile::NoUserProfileError),
+        (status = StatusCode::INTERNAL_SERVER_ERROR, description = internal_server_error::DESCRIPTION, body = internal_server_error::InternalServerError),
     ),
 )]
 pub async fn get_profile(
@@ -31,14 +31,12 @@ pub async fn get_profile(
         .await
         .map_err(|e| {
             tracing::error!("Database query failed: {}", e);
-            dto::error::ErrorResponse::internal_server_error()
+            internal_server_error::InternalServerError::to_response()
         })?;
 
     let Some(profile) = maybe_profile else {
-        tracing::warn!("Profile not found for user {}", claims.user_id);
-        return Err(dto::error::ErrorResponse::not_found(Some(
-            "Profile not found. Have you remembered to create it first?",
-        )));
+        tracing::error!("Profile not found for user {}", claims.user_id);
+        return Err(no_user_profile::NoUserProfileError::to_response());
     };
 
     Ok(Json(profile.into()))
@@ -48,14 +46,15 @@ pub async fn get_profile(
     post,
     path = "/api/auth/profile",
     tag = ApiTags::PROFILE,
-    description = "Create a profile for the authenticated user. Email must be present in JWT claims.",
+    description = "Create a profile for the authenticated user. Email must be verified.",
     responses(
-        (status = 200, description = "Profile created successfully", body = dto::profile::response::ProfileResponse),
-        (status = 400, description = "Invalid request payload or email not provided in token claims", body = dto::error::BadRequestError),
-        (status = 401, description = "Unauthorized - Invalid or missing authentication token", body = dto::error::UnauthorizedError),
-        (status = 403, description = "Forbidden - You do not have permission to access this resource", body = dto::error::ForbiddenError),
-        (status = 409, description = "Profile already exists for this user", body = dto::error::ConflictError),
-        (status = 500, description = "Internal server error", body = dto::error::InternalServerError),
+        (status = StatusCode::OK, description = "Profile created successfully", body = dto::profile::response::ProfileResponse),
+        (status = StatusCode::BAD_REQUEST, description = bad_request::DESCRIPTION, body = bad_request::BadRequestError),
+        (status = StatusCode::UNAUTHORIZED, description = unauthorized::DESCRIPTION, body = unauthorized::UnauthorizedError),
+        (status = StatusCode::FORBIDDEN, description = email_not_verified::DESCRIPTION, body = email_not_verified::EmailNotVerifiedError),
+        (status = StatusCode::CONFLICT, description = no_user_profile::DESCRIPTION, body = no_user_profile::NoUserProfileError),
+        (status = StatusCode::CONFLICT, description = profile_already_exists::DESCRIPTION, body = profile_already_exists::ProfileAlreadyExists),
+        (status = StatusCode::INTERNAL_SERVER_ERROR, description = internal_server_error::DESCRIPTION, body = internal_server_error::InternalServerError),
     ),
     request_body = dto::profile::request::CreateProfileRequest,
 )]
@@ -67,9 +66,7 @@ pub async fn create_profile(
     // Verify request validity
     if let Err(e) = payload.validate() {
         tracing::warn!("Invalid create profile request: {}", e);
-        return Err(dto::error::ErrorResponse::bad_request(Some(
-            "Invalid request payload",
-        )));
+        return Err(bad_request::BadRequestError::to_response());
     }
 
     // Check if profile already exists
@@ -78,23 +75,20 @@ pub async fn create_profile(
         .await
         .map_err(|e| {
             tracing::error!("Database query failed: {}", e);
-            dto::error::ErrorResponse::internal_server_error()
+            internal_server_error::InternalServerError::to_response()
         })?;
 
     if exists.is_some() {
-        return Err(dto::error::ErrorResponse::conflict(Some(
-            "Profile already exists",
-        )));
+        tracing::error!("Profile already exists for user {}", claims.user_id);
+        return Err(profile_already_exists::ProfileAlreadyExists::to_response());
     }
 
     let Some(email) = claims.email.clone() else {
         tracing::error!(
-            "Email not provided in token claims for user {}",
+            "Email not provided in token claims for user {}.",
             claims.user_id
         );
-        return Err(dto::error::ErrorResponse::bad_request(Some(
-            "Email not provided in token claims",
-        )));
+        return Err(internal_server_error::InternalServerError::to_response());
     };
 
     let new_profile = profiles::ActiveModel {
@@ -109,7 +103,7 @@ pub async fn create_profile(
 
     let profile = new_profile.insert(&state.db).await.map_err(|e| {
         tracing::error!("Database insert failed: {}", e);
-        dto::error::ErrorResponse::internal_server_error()
+        internal_server_error::InternalServerError::to_response()
     })?;
 
     Ok(Json(profile.into()))

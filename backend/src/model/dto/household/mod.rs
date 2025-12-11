@@ -15,7 +15,7 @@ pub struct Coordinates {
     pub lon: f32,
 }
 
-#[derive(Serialize, Debug, ToSchema)]
+#[derive(Serialize, Debug, ToSchema, Deserialize)]
 pub struct HouseholdMember {
     #[schema(example = "KYKWKfVs5suGFhQtIW9nyX4bxALv")]
     pub id: String,
