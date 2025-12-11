@@ -10,8 +10,8 @@ impl MigrationTrait for Migration {
             .alter_table(
                 Table::alter()
                     .table(Households::Table)
-                    .add_column(ColumnDef::new(Households::lat).float().not_null())
-                    .add_column(ColumnDef::new(Households::lon).float().not_null())
+                    .add_column(ColumnDef::new(Households::Lat).float().not_null())
+                    .add_column(ColumnDef::new(Households::Lon).float().not_null())
                     .to_owned(),
             )
             .await?;
@@ -24,8 +24,8 @@ impl MigrationTrait for Migration {
             .alter_table(
                 Table::alter()
                     .table(Households::Table)
-                    .drop_column(Households::lat)
-                    .drop_column(Households::lon)
+                    .drop_column(Households::Lat)
+                    .drop_column(Households::Lon)
                     .to_owned(),
             )
             .await?;
@@ -37,6 +37,6 @@ impl MigrationTrait for Migration {
 #[derive(DeriveIden)]
 enum Households {
     Table,
-    lat,
-    lon,
+    Lat,
+    Lon,
 }
