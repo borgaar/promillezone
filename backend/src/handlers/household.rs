@@ -235,7 +235,7 @@ pub async fn create_invite_code(
     post,
     path = UriPaths::JOIN_HOUSEHOLD,
     tag = ApiTags::HOUSEHOLD,
-    description = "Join a household using a 6-digit numeric invite code. The code must be valid and not expired. Users can only be in one household at a time. If already in a household, leave it first.",
+    description = "Join a household using a 6-digit numeric invite code. The code must be valid and not expired. Users can only be in one household at a time. If already in a household, you must leave it first.",
     responses(
         (status = StatusCode::OK, description = "Successfully joined the household", body = dto::household::response::GetHouseholdResponse),
         (status = StatusCode::BAD_REQUEST, description = bad_request::DESCRIPTION, body = bad_request::BadRequestError),
