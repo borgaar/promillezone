@@ -5,7 +5,7 @@ pub mod response;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-use crate::entity::{households, profiles};
+use crate::entity::profiles;
 
 #[derive(Deserialize, Serialize, Debug, ToSchema)]
 pub struct Coordinates {
