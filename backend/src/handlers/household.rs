@@ -15,13 +15,13 @@ use crate::{
     },
     middleware::firebase_auth::Claims,
     model::dto::{self},
-    utils::{openapi::ScalarTags, uri_paths::UriPaths},
+    utils::{openapi::ApiTags, uri_paths::UriPaths},
 };
 
 #[utoipa::path(
     get,
     path = UriPaths::GET_HOUSEHOLD,
-    tag = ScalarTags::HOUSEHOLD,
+    tag = ApiTags::HOUSEHOLD,
     description = "Get the household details of the authenticated user. User must be a member of a household.",
     responses(
         (status = 200, description = "Household retrieved successfully", body = dto::household::response::GetHouseholdResponse),
@@ -88,7 +88,7 @@ pub async fn get_household(
 #[utoipa::path(
     post,
     path = UriPaths::CREATE_HOUSEHOLD,
-    tag = ScalarTags::HOUSEHOLD,
+    tag = ApiTags::HOUSEHOLD,
     description = "Create a new household with the authenticated user as the first member. Requires name, address, and household type (family, dorm, or other).",
     responses(
         (status = 200, description = "Household created successfully", body = dto::household::response::CreateHouseholdResponse),
@@ -98,7 +98,7 @@ pub async fn get_household(
         (status = 409, description = "User is already a member of a household", body = dto::error::UserAlreadyInHouseholdError),
         (status = 500, description = "Internal server error", body = dto::error::InternalServerError),
     ),
-    request_body = dto::household::request::CreateHouseholdRequest
+    request_body = dto::household::request::CreateHouseholdRequest,
 )]
 pub async fn create_household(
     State(state): State<AppState>,
@@ -181,7 +181,7 @@ pub async fn create_household(
 #[utoipa::path(
     post,
     path = UriPaths::CREATE_HOUSEHOLD_INVITE,
-    tag = ScalarTags::HOUSEHOLD,
+    tag = ApiTags::HOUSEHOLD,
     description = "Generate a 6-digit numeric invite code for your household. The code expires in 1 hour and can only be used once. User must be part of a household.",
     responses(
         (status = 200, description = "Invite code created successfully", body = dto::household::response::CreateInviteCodeResponse),
@@ -252,7 +252,7 @@ pub async fn create_invite_code(
 #[utoipa::path(
     post,
     path = UriPaths::JOIN_HOUSEHOLD,
-    tag = ScalarTags::HOUSEHOLD,
+    tag = ApiTags::HOUSEHOLD,
     description = "Join a household using a 6-digit numeric invite code. The code must be valid and not expired. Users can only be in one household at a time.",
     responses(
         (status = 200, description = "Successfully joined the household", body = dto::household::response::GetHouseholdResponse),
@@ -402,7 +402,7 @@ pub async fn join_household(
 #[utoipa::path(
     delete,
     path = UriPaths::LEAVE_HOUSEHOLD,
-    tag = ScalarTags::HOUSEHOLD,
+    tag = ApiTags::HOUSEHOLD,
     description = "Leave your current household. If you are the last member, the household will be automatically deleted along with any associated data.",
     responses(
         (status = 200, description = "Successfully left the household"),

@@ -2,8 +2,8 @@ use utoipa::OpenApi;
 
 use crate::handlers;
 
-pub struct ScalarTags;
-impl ScalarTags {
+pub struct ApiTags;
+impl ApiTags {
     pub const HOUSEHOLD: &str = "Household";
     pub const PROFILE: &str = "Profile";
 }
@@ -28,9 +28,12 @@ impl ScalarTags {
         handlers::household::get_household,
     ),
     modifiers(&SecurityAddon),
+    security(
+        ("bearerAuth" = [])
+    ),
     tags(
-        (name = ScalarTags::PROFILE, description = "Endpoints for managing the user's profile."),
-        (name = ScalarTags::HOUSEHOLD, description = "Endpoints for managing the user's assigned household.")
+        (name = ApiTags::PROFILE, description = "Endpoints for managing the user's profile."),
+        (name = ApiTags::HOUSEHOLD, description = "Endpoints for managing the user's assigned household.")
     )
 )]
 pub struct ApiDoc;

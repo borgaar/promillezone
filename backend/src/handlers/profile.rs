@@ -5,13 +5,13 @@ use validator::Validate;
 use crate::entity::prelude::*;
 use crate::entity::profiles;
 use crate::model::dto::{self};
-use crate::utils::openapi::ScalarTags;
+use crate::utils::openapi::ApiTags;
 use crate::{AppState, middleware::firebase_auth::Claims};
 
 #[utoipa::path(
     get,
     path = "/api/auth/profile",
-    tag = ScalarTags::PROFILE,
+    tag = ApiTags::PROFILE,
     description = "Get the profile of the authenticated user. Returns the user's profile information if they are verified.",
     responses(
         (status = 200, description = "User profile retrieved successfully", body = dto::profile::response::ProfileResponse),
@@ -47,7 +47,7 @@ pub async fn get_profile(
 #[utoipa::path(
     post,
     path = "/api/auth/profile",
-    tag = ScalarTags::PROFILE,
+    tag = ApiTags::PROFILE,
     description = "Create a profile for the authenticated user. Email must be present in JWT claims.",
     responses(
         (status = 200, description = "Profile created successfully", body = dto::profile::response::ProfileResponse),
