@@ -19,12 +19,15 @@ class CollectiveTransportCubit extends Cubit<CollectiveTransportState> {
       stopPlaceId: 'NSR:StopPlace:42528',
     );
 
-    emit(CollectiveTransportLoaded(stopPlaceData: data));
+    emit(
+      CollectiveTransportLoaded(
+        stopPlaceData: data,
+        departures: data.departures,
+      ),
+    );
   }
 
   Future<void> initialize() async {
-    emit(CollectiveTransportInProgress());
-
     _fetchDepartures();
 
     // Start periodic updates every 5 seconds

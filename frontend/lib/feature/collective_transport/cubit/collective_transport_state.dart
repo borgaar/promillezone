@@ -9,13 +9,21 @@ sealed class CollectiveTransportState extends Equatable {
 
 final class CollectiveTransportInitial extends CollectiveTransportState {}
 
-final class CollectiveTransportInProgress extends CollectiveTransportState {}
-
 final class CollectiveTransportLoaded extends CollectiveTransportState {
   final StopPlace stopPlaceData;
+  final List<Departure> departures;
 
-  const CollectiveTransportLoaded({required this.stopPlaceData});
+  CollectiveTransportLoaded({
+    required this.stopPlaceData,
+    required this.departures,
+  }) {
+    departures.sort(
+      (a, b) =>
+          a.expectedDepartureTime.millisecondsSinceEpoch -
+          b.expectedDepartureTime.millisecondsSinceEpoch,
+    );
+  }
 
   @override
-  List<Object> get props => [stopPlaceData];
+  List<Object> get props => [stopPlaceData, departures];
 }

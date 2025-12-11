@@ -25,6 +25,7 @@ class DailyContentWidget extends StatelessWidget {
               child: Text("Failed to load daily content: $errorMessage"),
             ),
             DailyContentSuccess(:final joke, :final quote, :final cat) => Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 Expanded(
                   child: Column(
@@ -61,7 +62,7 @@ class DailyContentWidget extends StatelessWidget {
                               joke,
                               style: const TextStyle(
                                 color: kioskTextColor,
-                                fontSize: 24,
+                                fontSize: 32,
                                 fontWeight: FontWeight.w400,
                                 fontFamily: "ComicNeue",
                               ),
@@ -89,7 +90,7 @@ class DailyContentWidget extends StatelessWidget {
                               quote,
                               style: const TextStyle(
                                 color: kioskTextColor,
-                                fontSize: 24,
+                                fontSize: 32,
                                 fontWeight: FontWeight.w400,
                                 fontFamily: "SourceSerif",
                               ),

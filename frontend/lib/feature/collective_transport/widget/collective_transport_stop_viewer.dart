@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:promillezone/feature/collective_transport/cubit/collective_transport_cubit.dart';
+import 'package:promillezone/feature/kiosk/container.dart';
 import 'package:promillezone/repository/collective_transport/repository.dart';
 import 'package:intl/intl.dart';
 
@@ -15,40 +16,50 @@ class CollectiveTransportStopViewer extends StatelessWidget {
           return const Center(child: Text('Initializing...'));
         }
 
-        if (state is CollectiveTransportInProgress) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
         if (state is CollectiveTransportLoaded) {
-          final stopPlace = state.stopPlaceData;
+          final departures = state.departures;
 
-          return Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Table(
-              columnWidths: const {
-                0: IntrinsicColumnWidth(),
-                1: FlexColumnWidth(2),
-                2: FlexColumnWidth(1),
-                3: IntrinsicColumnWidth(),
-                4: IntrinsicColumnWidth(),
-              },
-              defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-              children: [
-                // Header row
-                TableRow(
-                  children: [
-                    _buildHeaderCell('Linje'),
-                    _buildHeaderCell('Destinasjon'),
-                    _buildHeaderCell('Stoppested'),
-                    _buildHeaderCell('Platform'),
-                    _buildHeaderCell('Forventet'),
-                  ],
-                ),
-                // Data rows
-                ...stopPlace.departures.take(15).map((departure) {
-                  return _buildDepartureRow(departure);
-                }),
-              ],
+          return KioskContainer(
+            child: SizedBox.expand(
+              child: Table(
+                columnWidths: const {
+                  0: FlexColumnWidth(1.5),
+                  1: FlexColumnWidth(6),
+                  2: FlexColumnWidth(1),
+                  3: FlexColumnWidth(2),
+                  4: FlexColumnWidth(1),
+                  5: FlexColumnWidth(1),
+                },
+                defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+                children: [
+                  // Header row
+                  TableRow(
+                    children: [
+                      _buildHeaderCell('Nr.'),
+                      _buildHeaderCell('Destinasjon', align: TextAlign.left),
+                      _buildHeaderCell('Plt.'),
+                      _buildHeaderCell('Status'),
+                      _buildHeaderCell('Tid'),
+                      _buildHeaderCell('Kl.'),
+                    ],
+                  ),
+                  // Data rows
+                  ...departures
+                      .where((d) => d.untilMinutes >= 5 && d.untilMinutes <= 20)
+                      .take(7)
+                      .expand(
+                        (departure) => [
+                          _buildDepartureRow(departure),
+                          TableRow(
+                            children: List.generate(
+                              6,
+                              (index) => SizedBox(height: 12),
+                            ),
+                          ),
+                        ],
+                      ),
+                ],
+              ),
             ),
           );
         }
@@ -58,54 +69,49 @@ class CollectiveTransportStopViewer extends StatelessWidget {
     );
   }
 
-  Widget _buildHeaderCell(String text) {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Text(
-        text,
-        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-      ),
+  Widget _buildHeaderCell(String text, {TextAlign align = TextAlign.center}) {
+    return Text(
+      text,
+      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
+      textAlign: align,
     );
   }
 
   TableRow _buildDepartureRow(Departure departure) {
-    final now = DateTime.now();
-    final expectedTime = departure.expectedDepartureTime;
-    final difference = expectedTime.difference(now);
-    final minutes = difference.inMinutes;
+    final minutes = departure.untilMinutes;
 
-    // Parse colors from hex strings
-    Color? backgroundColor;
-    Color? textColor;
+    final minute = 1000 * 60;
+    final isDelayed =
+        (departure.expectedDepartureTime.millisecondsSinceEpoch / minute)
+                .round() -
+            1 >
+        (departure.aimedDepartureTime.millisecondsSinceEpoch / minute).round();
 
-    if (departure.line.presentation.colour != null) {
-      backgroundColor = _parseHexColor(departure.line.presentation.colour!);
+    int timePadding = 0;
+
+    if (departure.quay.publicCode == "2" || departure.quay.publicCode == "3") {
+      // These platforms are on the other side of the road, so we add 1 minute of extra time to go
+      timePadding += 1;
     }
 
-    if (departure.line.presentation.textColour != null) {
-      textColor = _parseHexColor(departure.line.presentation.textColour!);
-    }
+    final status = switch (minutes + timePadding) {
+      <= 5 => "skull",
+      6 => "spurt",
+      7 => "løp",
+      8 => "jogg",
+      9 => "gå",
+      10 => "ferdig",
+      11 => "klar",
+      12 => "gucci",
+      >= 13 => "chillern",
+      _ => throw Exception("Unreachable"),
+    };
 
-    // Determine time display
-    String timeDisplay;
-    Color timeColor = Colors.white;
+    var destination = departure.destinationDisplay.frontText;
 
-    if (minutes <= 0) {
-      timeDisplay = 'Nå';
-      timeDisplay += " 💀";
-      timeColor = Colors.white;
-    } else if (minutes < 10) {
-      timeDisplay = '$minutes min';
-      if (minutes <= 2) {
-        timeColor = Colors.red;
-        timeDisplay += " 💀";
-      } else if (minutes <= 5) {
-        timeColor = Colors.red.shade300;
-        timeDisplay += " 💀";
-      }
-    } else {
-      timeDisplay = DateFormat('HH:mm').format(expectedTime);
-      timeColor = Colors.white;
+    final maxLength = 29;
+    if (destination.length > maxLength) {
+      destination = '${destination.substring(0, maxLength - 3)}...';
     }
 
     return TableRow(
@@ -116,110 +122,88 @@ class CollectiveTransportStopViewer extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: backgroundColor ?? Colors.grey,
-              borderRadius: BorderRadius.circular(4),
+              color: departure.line.publicCode.startsWith("FB")
+                  ? Colors.grey
+                  : Color(0xffA9D22D),
+              borderRadius: BorderRadius.circular(16),
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  _getTransportIcon(departure.transportMode),
-                  color: textColor ?? Colors.white,
-                  size: 20,
+            child: Center(
+              child: Text(
+                departure.line.publicCode,
+                style: TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 32,
                 ),
-                const SizedBox(width: 4),
-                Text(
-                  departure.line.publicCode,
-                  style: TextStyle(
-                    color: textColor ?? Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ),
         // Destination
         Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Text(
-            departure.destinationDisplay.frontText,
-            style: const TextStyle(fontSize: 16),
-          ),
-        ),
-        // Stop name
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Text(
-            departure.quay.name,
-            style: const TextStyle(fontSize: 16),
-          ),
+          padding: const EdgeInsets.only(left: 8.0),
+          child: Text(destination, style: const TextStyle(fontSize: 32)),
         ),
         // Platform
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Text(
-            departure.quay.publicCode,
-            style: const TextStyle(fontSize: 16),
+        Text(
+          departure.quay.publicCode,
+          style: const TextStyle(fontSize: 32),
+          textAlign: TextAlign.center,
+        ),
+        // Status
+        if (status == "skull")
+          Image.asset("asset/img/skull-emoji.png", height: 32)
+        else
+          Text(
+            status,
+            style: const TextStyle(fontSize: 24),
             textAlign: TextAlign.center,
           ),
-        ),
         // Expected time
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                timeDisplay,
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: timeColor,
-                ),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          mainAxisSize: MainAxisSize.min,
+          textBaseline: TextBaseline.alphabetic,
+          children: [
+            Text(
+              minutes.toString(),
+              style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(width: 3),
+            Text(
+              "min",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.normal),
+            ),
+          ],
+        ),
+        Column(
+          children: [
+            Text(
+              formatTime(departure.expectedDepartureTime),
+              style: TextStyle(
+                fontSize: 24,
+                color: isDelayed ? Colors.red : Colors.white,
+                fontWeight: FontWeight.w600,
               ),
-              if (minutes < 10 && minutes > 0)
-                Text(
-                  DateFormat('HH:mm').format(expectedTime),
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+            if (isDelayed)
+              Text(
+                formatTime(departure.aimedDepartureTime),
+                style: TextStyle(
+                  decoration: TextDecoration.lineThrough,
+                  fontSize: 18,
                 ),
-            ],
-          ),
+              )
+            else
+              SizedBox(height: 0),
+          ],
         ),
       ],
     );
   }
+}
 
-  Color _parseHexColor(String hexColor) {
-    final hex = hexColor.replaceAll('#', '');
-    if (hex.length == 6) {
-      return Color(int.parse('FF$hex', radix: 16));
-    } else if (hex.length == 8) {
-      return Color(int.parse(hex, radix: 16));
-    }
-    return Colors.grey;
-  }
-
-  IconData _getTransportIcon(TransportMode mode) {
-    switch (mode) {
-      case TransportMode.bus:
-        return Icons.directions_bus;
-      case TransportMode.tram:
-        return Icons.tram;
-      case TransportMode.rail:
-        return Icons.train;
-      case TransportMode.metro:
-        return Icons.subway;
-      case TransportMode.water:
-        return Icons.directions_boat;
-      case TransportMode.air:
-        return Icons.flight;
-      case TransportMode.coach:
-        return Icons.airport_shuttle;
-      default:
-        return Icons.directions;
-    }
-  }
+String formatTime(DateTime time) {
+  final formatter = DateFormat.Hm();
+  return formatter.format(time);
 }

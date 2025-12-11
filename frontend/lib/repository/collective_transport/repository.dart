@@ -24,10 +24,7 @@ class LinePresentation extends Equatable {
   final String? textColour;
   final String? colour;
 
-  const LinePresentation({
-    this.textColour,
-    this.colour,
-  });
+  const LinePresentation({this.textColour, this.colour});
 
   @override
   List<Object?> get props => [textColour, colour];
@@ -52,10 +49,7 @@ class Quay extends Equatable {
   final String publicCode;
   final String name;
 
-  const Quay({
-    required this.publicCode,
-    required this.name,
-  });
+  const Quay({required this.publicCode, required this.name});
 
   @override
   List<Object?> get props => [publicCode, name];
@@ -65,10 +59,7 @@ class DestinationDisplay extends Equatable {
   final String frontText;
   final List<String> via;
 
-  const DestinationDisplay({
-    required this.frontText,
-    required this.via,
-  });
+  const DestinationDisplay({required this.frontText, required this.via});
 
   @override
   List<Object?> get props => [frontText, via];
@@ -78,10 +69,7 @@ class LocalizedText extends Equatable {
   final String value;
   final String? language;
 
-  const LocalizedText({
-    required this.value,
-    this.language,
-  });
+  const LocalizedText({required this.value, this.language});
 
   @override
   List<Object?> get props => [value, language];
@@ -131,21 +119,27 @@ class Departure extends Equatable {
     required this.situations,
   });
 
+  int get untilMinutes {
+    final now = DateTime.now();
+    final difference = expectedDepartureTime.difference(now);
+    return difference.inMinutes;
+  }
+
   @override
   List<Object?> get props => [
-        quay,
-        destinationDisplay,
-        aimedDepartureTime,
-        expectedDepartureTime,
-        expectedArrivalTime,
-        line,
-        transportMode,
-        transportSubmode,
-        cancellation,
-        realtime,
-        delay,
-        situations,
-      ];
+    quay,
+    destinationDisplay,
+    aimedDepartureTime,
+    expectedDepartureTime,
+    expectedArrivalTime,
+    line,
+    transportMode,
+    transportSubmode,
+    cancellation,
+    realtime,
+    delay,
+    situations,
+  ];
 }
 
 class StopPlace extends Equatable {
@@ -212,8 +206,7 @@ class CollectiveTransportInternalServerException
   });
 }
 
-class CollectiveTransportGraphQLException
-    extends CollectiveTransportException {
+class CollectiveTransportGraphQLException extends CollectiveTransportException {
   const CollectiveTransportGraphQLException({
     required super.code,
     required super.message,
