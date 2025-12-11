@@ -198,12 +198,6 @@ pub async fn authenticate(
         return unauthorized::UnauthorizedError::to_response();
     };
 
-    // Get Firebase signing keys
-    let Ok(keys) = state.firebase_auth.get_keys().await else {
-        tracing::error!("Failed to get Firebase Auth signing keys");
-        return internal_server_error::InternalServerError::to_response();
-    };
-
     // Decode token header and get key ID used for signing
     let Ok(header) = jsonwebtoken::decode_header(token) else {
         tracing::error!("Failed to decode JWT header");
@@ -212,11 +206,6 @@ pub async fn authenticate(
     
     let Some(kid) = header.kid else {
         tracing::error!("JWT header missing key ID (kid)");
-        return unauthorized::UnauthorizedError::to_response();
-    };
-    
-    let Some(decoding_key) = keys.get(&kid) else {
-        tracing::error!("No matching Firebase public key found for kid: {}", kid);
         return unauthorized::UnauthorizedError::to_response();
     };
 
@@ -228,6 +217,19 @@ pub async fn authenticate(
     validation.validate_nbf = false;
     validation.leeway = 60;
 
+    // Get Firebase's public keys
+    let Ok(keys) = state.firebase_auth.get_keys().await else {
+        tracing::error!("Failed to get Firebase Auth signing keys");
+        return internal_server_error::InternalServerError::to_response();
+    };
+
+    // Get the applicable public key for this token
+    let Some(decoding_key) = keys.get(&kid) else {
+        tracing::error!("No matching Firebase public key found for kid: {}", kid);
+        return unauthorized::UnauthorizedError::to_response();
+    };
+
+    // Decode and validate the JWT
     let token_data = match jsonwebtoken::decode::<Claims>(token, decoding_key, &validation) {
         Ok(data) => data,
         Err(e) => {
