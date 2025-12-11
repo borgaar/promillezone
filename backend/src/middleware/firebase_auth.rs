@@ -194,29 +194,29 @@ pub async fn authenticate(
         .and_then(|h| h.to_str().ok())
         .and_then(|h| h.strip_prefix("Bearer "))
     else {
-        return dto::ErrorResponse::unauthorized();
+        return dto::error::ErrorResponse::unauthorized();
     };
 
     // Get Firebase signing keys
     let Ok(keys) = state.firebase_auth.get_keys().await else {
         tracing::error!("Failed to get Firebase Auth signing keys");
-        return dto::ErrorResponse::internal_server_error();
+        return dto::error::ErrorResponse::internal_server_error();
     };
 
     // Decode token header and get key ID used for signing
     let Ok(header) = jsonwebtoken::decode_header(token) else {
         tracing::error!("Failed to decode JWT header");
-        return dto::ErrorResponse::unauthorized();
+        return dto::error::ErrorResponse::unauthorized();
     };
     
     let Some(kid) = header.kid else {
         tracing::error!("JWT header missing key ID (kid)");
-        return dto::ErrorResponse::unauthorized();
+        return dto::error::ErrorResponse::unauthorized();
     };
     
     let Some(decoding_key) = keys.get(&kid) else {
         tracing::error!("No matching Firebase public key found for kid: {}", kid);
-        return dto::ErrorResponse::unauthorized();
+        return dto::error::ErrorResponse::unauthorized();
     };
 
     // Validate token claims
@@ -231,18 +231,18 @@ pub async fn authenticate(
         Ok(data) => data,
         Err(e) => {
             tracing::error!("Failed to validate JWT: {}", e);
-            return dto::ErrorResponse::unauthorized();
+            return dto::error::ErrorResponse::unauthorized();
         }
     };
 
     if token_data.claims.sub.is_empty() {
         tracing::error!("JWT subject (sub) claim is empty");
-        return dto::ErrorResponse::unauthorized();
+        return dto::error::ErrorResponse::unauthorized();
     }
 
     if token_data.claims.email_verified != Some(true) {
         tracing::error!("Email not verified for user_id: {}", token_data.claims.sub);
-        return dto::ErrorResponse::forbidden();
+        return dto::error::ErrorResponse::forbidden();
     }
 
     // Insert claims into request extensions for downstream handlers

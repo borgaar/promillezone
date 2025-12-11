@@ -27,7 +27,7 @@ pub async fn inject_household(
         Ok(Some(profile)) => profile,
         Ok(None) => {
             tracing::warn!("Profile not found for user_id: {}", claims.user_id);
-            return dto::ErrorResponse::not_found(Some("Profile not found"));
+            return dto::error::ErrorResponse::not_found(Some("Profile not found"));
         }
         Err(err) => {
             tracing::error!(
@@ -35,7 +35,7 @@ pub async fn inject_household(
                 claims.user_id,
                 err
             );
-            return dto::ErrorResponse::internal_server_error();
+            return dto::error::ErrorResponse::internal_server_error();
         }
     };
 
@@ -48,7 +48,7 @@ pub async fn inject_household(
                 profile.id,
                 profile.email
             );
-            return dto::ErrorResponse::no_household();
+            return dto::error::ErrorResponse::no_household();
         }
     };
 

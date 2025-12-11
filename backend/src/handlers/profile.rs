@@ -4,7 +4,7 @@ use validator::Validate;
 
 use crate::entity::prelude::*;
 use crate::entity::profiles;
-use crate::model::dto::{self, ProfileResponse};
+use crate::model::dto::{self};
 use crate::utils::openapi::ScalarTags;
 use crate::{AppState, middleware::firebase_auth::Claims};
 
@@ -14,29 +14,29 @@ use crate::{AppState, middleware::firebase_auth::Claims};
     tag = ScalarTags::PROFILE,
     description = "Get the profile of the authenticated user. Returns the user's profile information if they are verified.",
     responses(
-        (status = 200, description = "User profile retrieved successfully", body = ProfileResponse),
-        (status = 401, description = "Unauthorized - Invalid or missing authentication token", body = dto::UnauthorizedError),
-        (status = 403, description = "Forbidden - You do not have permission to access this resource", body = dto::ForbiddenError),
-        (status = 404, description = "Profile not found - User needs to create a profile first", body = dto::NotFoundError),
-        (status = 500, description = "Internal server error", body = dto::InternalServerError),
+        (status = 200, description = "User profile retrieved successfully", body = dto::profile::response::ProfileResponse),
+        (status = 401, description = "Unauthorized - Invalid or missing authentication token", body = dto::error::UnauthorizedError),
+        (status = 403, description = "Forbidden - You do not have permission to access this resource", body = dto::error::ForbiddenError),
+        (status = 404, description = "Profile not found - User needs to create a profile first", body = dto::error::NotFoundError),
+        (status = 500, description = "Internal server error", body = dto::error::InternalServerError),
     ),
 )]
 pub async fn get_profile(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Result<Json<ProfileResponse>, Response> {
+) -> Result<Json<dto::profile::response::ProfileResponse>, Response> {
     // Query the database for the user's profile
     let maybe_profile = Profiles::find_by_id(claims.user_id.clone())
         .one(&state.db)
         .await
         .map_err(|e| {
             tracing::error!("Database query failed: {}", e);
-            dto::ErrorResponse::internal_server_error()
+            dto::error::ErrorResponse::internal_server_error()
         })?;
 
     let Some(profile) = maybe_profile else {
         tracing::warn!("Profile not found for user {}", claims.user_id);
-        return Err(dto::ErrorResponse::not_found(Some(
+        return Err(dto::error::ErrorResponse::not_found(Some(
             "Profile not found. Have you remembered to create it first?",
         )));
     };
@@ -50,24 +50,24 @@ pub async fn get_profile(
     tag = ScalarTags::PROFILE,
     description = "Create a profile for the authenticated user. Email must be present in JWT claims.",
     responses(
-        (status = 200, description = "Profile created successfully", body = ProfileResponse),
-        (status = 400, description = "Invalid request payload or email not provided in token claims", body = dto::BadRequestError),
-        (status = 401, description = "Unauthorized - Invalid or missing authentication token", body = dto::UnauthorizedError),
-        (status = 403, description = "Forbidden - You do not have permission to access this resource", body = dto::ForbiddenError),
-        (status = 409, description = "Profile already exists for this user", body = dto::ConflictError),
-        (status = 500, description = "Internal server error", body = dto::InternalServerError),
+        (status = 200, description = "Profile created successfully", body = dto::profile::response::ProfileResponse),
+        (status = 400, description = "Invalid request payload or email not provided in token claims", body = dto::error::BadRequestError),
+        (status = 401, description = "Unauthorized - Invalid or missing authentication token", body = dto::error::UnauthorizedError),
+        (status = 403, description = "Forbidden - You do not have permission to access this resource", body = dto::error::ForbiddenError),
+        (status = 409, description = "Profile already exists for this user", body = dto::error::ConflictError),
+        (status = 500, description = "Internal server error", body = dto::error::InternalServerError),
     ),
-    request_body = dto::CreateProfileRequest,
+    request_body = dto::profile::request::CreateProfileRequest,
 )]
 pub async fn create_profile(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Json(payload): Json<dto::CreateProfileRequest>,
-) -> Result<Json<ProfileResponse>, Response> {
+    Json(payload): Json<dto::profile::request::CreateProfileRequest>,
+) -> Result<Json<dto::profile::response::ProfileResponse>, Response> {
     // Verify request validity
     if let Err(e) = payload.validate() {
         tracing::warn!("Invalid create profile request: {}", e);
-        return Err(dto::ErrorResponse::bad_request(Some(
+        return Err(dto::error::ErrorResponse::bad_request(Some(
             "Invalid request payload",
         )));
     }
@@ -78,11 +78,13 @@ pub async fn create_profile(
         .await
         .map_err(|e| {
             tracing::error!("Database query failed: {}", e);
-            dto::ErrorResponse::internal_server_error()
+            dto::error::ErrorResponse::internal_server_error()
         })?;
 
     if exists.is_some() {
-        return Err(dto::ErrorResponse::conflict(Some("Profile already exists")));
+        return Err(dto::error::ErrorResponse::conflict(Some(
+            "Profile already exists",
+        )));
     }
 
     let Some(email) = claims.email.clone() else {
@@ -90,7 +92,7 @@ pub async fn create_profile(
             "Email not provided in token claims for user {}",
             claims.user_id
         );
-        return Err(dto::ErrorResponse::bad_request(Some(
+        return Err(dto::error::ErrorResponse::bad_request(Some(
             "Email not provided in token claims",
         )));
     };
@@ -107,7 +109,7 @@ pub async fn create_profile(
 
     let profile = new_profile.insert(&state.db).await.map_err(|e| {
         tracing::error!("Database insert failed: {}", e);
-        dto::ErrorResponse::internal_server_error()
+        dto::error::ErrorResponse::internal_server_error()
     })?;
 
     Ok(Json(profile.into()))

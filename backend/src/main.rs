@@ -15,8 +15,8 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use utoipa::OpenApi;
 use utoipa_scalar::{Scalar, Servable};
 
-use crate::middleware::firebase_auth::FirebaseAuth;
 use crate::utils::openapi::ApiDoc;
+use crate::{middleware::firebase_auth::FirebaseAuth, utils::uri_paths::UriPaths};
 
 #[derive(Clone)]
 pub struct AppState {
@@ -53,14 +53,17 @@ async fn main() {
 
     // Protected routes
     let protected = Router::new()
-        .route("/api/auth/profile", get(handlers::profile::get_profile))
-        .route("/api/auth/profile", post(handlers::profile::create_profile))
+        .route(UriPaths::GET_PROFILE, get(handlers::profile::get_profile))
         .route(
-            "/api/household",
+            UriPaths::CREATE_PROFILE,
+            post(handlers::profile::create_profile),
+        )
+        .route(
+            UriPaths::CREATE_HOUSEHOLD,
             post(handlers::household::create_household),
         )
         .route(
-            "/api/household/join",
+            UriPaths::JOIN_HOUSEHOLD,
             post(handlers::household::join_household),
         )
         .route_layer(axum::middleware::from_fn_with_state(
@@ -71,12 +74,16 @@ async fn main() {
     // Routes that require both authentication and household membership
     let household_protected = Router::new()
         .route(
-            "/api/household/invite",
+            UriPaths::CREATE_HOUSEHOLD_INVITE,
             post(handlers::household::create_invite_code),
         )
         .route(
-            "/api/household/leave",
+            UriPaths::LEAVE_HOUSEHOLD,
             delete(handlers::household::leave_household),
+        )
+        .route(
+            UriPaths::GET_HOUSEHOLD,
+            get(handlers::household::get_household),
         )
         .route_layer(axum::middleware::from_fn_with_state(
             state.clone(),
@@ -99,8 +106,8 @@ async fn main() {
         .merge(household_protected)
         .layer(TraceLayer::new_for_http())
         .layer(CorsLayer::permissive())
-        .merge(Scalar::with_url("/scalar", openapi.clone()))
-        .merge(Router::new().route("/openapi.json", get(|| async move { opena_json })))
+        .merge(Scalar::with_url(UriPaths::SCALAR, openapi.clone()))
+        .merge(Router::new().route(UriPaths::OPENAPI_JSON, get(|| async move { opena_json })))
         .with_state(state);
 
     let addr = SocketAddr::from(([0, 0, 0, 0], 3000));

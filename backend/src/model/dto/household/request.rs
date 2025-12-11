@@ -2,7 +2,7 @@ use serde::Deserialize;
 use utoipa::ToSchema;
 use validator::Validate;
 
-use crate::model::dto::Coordinates;
+use crate::model::dto::household::Coordinates;
 
 use super::enums::HouseholdType;
 

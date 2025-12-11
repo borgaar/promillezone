@@ -12,7 +12,7 @@ impl ScalarTags {
 #[openapi(
     info(
         title = "Promillezone API",
-        version = "0.1.0",
+        version = "0.0.1",
         description = "API for the Promillezone application",
         contact(
             name = "API Support",
@@ -25,6 +25,7 @@ impl ScalarTags {
         handlers::household::create_invite_code,
         handlers::household::join_household,
         handlers::household::leave_household,
+        handlers::household::get_household,
     ),
     modifiers(&SecurityAddon),
     tags(
