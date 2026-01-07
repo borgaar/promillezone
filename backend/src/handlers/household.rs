@@ -13,9 +13,9 @@ use crate::{
         prelude::*,
         profiles,
     },
+    lib::{openapi::ApiTags, uri_paths::UriPaths},
     middleware::firebase_auth::Claims,
     model::dto::{self, error::*},
-    utils::{openapi::ApiTags, uri_paths::UriPaths},
 };
 
 #[utoipa::path(

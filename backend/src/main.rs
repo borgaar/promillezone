@@ -1,8 +1,8 @@
 mod entity;
 mod handlers;
+mod lib;
 mod middleware;
 mod model;
-mod utils;
 
 use axum::{
     Router,
@@ -15,8 +15,8 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use utoipa::OpenApi;
 use utoipa_scalar::{Scalar, Servable};
 
-use crate::utils::openapi::ApiDoc;
-use crate::{middleware::firebase_auth::FirebaseAuth, utils::uri_paths::UriPaths};
+use crate::lib::openapi::ApiDoc;
+use crate::{lib::uri_paths::UriPaths, middleware::firebase_auth::FirebaseAuth};
 
 #[derive(Clone)]
 pub struct AppState {
