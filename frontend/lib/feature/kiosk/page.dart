@@ -3,6 +3,7 @@ import 'package:promillezone/feature/collective_transport/widget/collective_tran
 import 'package:promillezone/feature/daily_content/widget/daily_content_widget.dart';
 import 'package:promillezone/feature/kiosk/constants.dart';
 import 'package:promillezone/feature/time/widget/time_widget.dart';
+import 'package:promillezone/feature/weather/widget/weather_forecast.dart';
 
 class KioskPage extends StatelessWidget {
   const KioskPage({super.key});
@@ -36,7 +37,7 @@ class KioskPage extends StatelessWidget {
                   child: Row(
                     spacing: kioskContainerSpacing,
                     children: [
-                      Expanded(flex: 3, child: Placeholder()),
+                      Expanded(flex: 3, child: WeatherForecast()),
                       Expanded(flex: 6, child: CollectiveTransportStopViewer()),
                       Expanded(flex: 2, child: Placeholder()),
                     ],

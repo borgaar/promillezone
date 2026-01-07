@@ -23,8 +23,6 @@ class WeatherCubit extends Cubit<WeatherState> {
   }
 
   Future<void> initialize() async {
-    emit(WeatherInProgress());
-
     _fetchWeather();
 
     // Start periodic updates every 15 minutes
