@@ -77,7 +77,7 @@ final class TrvGarbageDisposalRepository implements GarbageDisposalRepository {
       case 'Matavfall':
         return TrashCategory.food;
       case 'Papp og papir':
-        return TrashCategory.paper;
+        return TrashCategory.cardboard;
       case 'Plastemballasje':
         return TrashCategory.plastic;
       case 'Restavfall':

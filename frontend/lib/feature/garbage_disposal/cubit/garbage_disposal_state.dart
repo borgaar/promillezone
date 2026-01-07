@@ -9,8 +9,6 @@ sealed class GarbageDisposalState extends Equatable {
 
 final class GarbageDisposalInitial extends GarbageDisposalState {}
 
-final class GarbageDisposalInProgress extends GarbageDisposalState {}
-
 final class GarbageDisposalLoaded extends GarbageDisposalState {
   final List<TrashScheduleEntry> trashSchedule;
 

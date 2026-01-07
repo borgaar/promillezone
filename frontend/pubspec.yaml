@@ -36,7 +36,8 @@ flutter:
 
   assets:
     - asset/img/
-    - asset/yr-weather/
+    - asset/img/yr/
+    - asset/img/garbage_disposal/
 
   fonts:
     - family: ComicNeue

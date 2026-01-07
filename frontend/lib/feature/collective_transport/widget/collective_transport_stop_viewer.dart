@@ -152,7 +152,7 @@ class CollectiveTransportStopViewer extends StatelessWidget {
         ),
         // Status
         if (status == "skull")
-          Image.asset("asset/img/skull-emoji.png", height: 32)
+          Image.asset("asset/img/skull_emoji.png", height: 32)
         else
           Text(
             status,

@@ -184,7 +184,7 @@ final class YrWeatherRepository extends WeatherRepository {
         ? 'm'
         : '';
 
-    final path = "asset/yr-weather/$code$suffix.png";
+    final path = "asset/img/yr/$code$suffix.png";
     return AssetImage(path);
   }
 }

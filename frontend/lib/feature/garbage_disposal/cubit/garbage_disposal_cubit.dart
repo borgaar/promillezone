@@ -8,23 +8,19 @@ part 'garbage_disposal_state.dart';
 
 class GarbageDisposalCubit extends Cubit<GarbageDisposalState> {
   GarbageDisposalCubit({required this.repository})
-      : super(GarbageDisposalInitial());
+    : super(GarbageDisposalInitial());
 
   final GarbageDisposalRepository repository;
   // ignore: unused_field
   late final Timer _timer;
 
   Future<void> _fetchTrashSchedule(String addressId) async {
-    final data = await repository.getTrashSchedule(
-      addressId: addressId,
-    );
+    final data = await repository.getTrashSchedule(addressId: addressId);
 
     emit(GarbageDisposalLoaded(trashSchedule: data));
   }
 
   Future<void> initialize({required String addressId}) async {
-    emit(GarbageDisposalInProgress());
-
     _fetchTrashSchedule(addressId);
 
     // Start periodic updates every hour

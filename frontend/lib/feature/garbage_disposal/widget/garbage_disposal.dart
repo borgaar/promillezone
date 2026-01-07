@@ -2,58 +2,86 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:promillezone/feature/garbage_disposal/cubit/garbage_disposal_cubit.dart';
-import 'package:promillezone/repository/garbage_disposal/repository.dart';
+import 'package:promillezone/feature/kiosk/container.dart';
 
 class GarbageDisposal extends StatelessWidget {
   const GarbageDisposal({super.key});
 
-  String _getCategoryName(TrashCategory category) {
-    return switch (category) {
-      TrashCategory.glassMetal => 'Glass og metall',
-      TrashCategory.food => 'Matavfall',
-      TrashCategory.paper => 'Papir',
-      TrashCategory.plastic => 'Plast',
-      TrashCategory.rest => 'Restavfall',
-    };
-  }
-
-  IconData _getCategoryIcon(TrashCategory category) {
-    return switch (category) {
-      TrashCategory.glassMetal => Icons.recycling,
-      TrashCategory.food => Icons.restaurant,
-      TrashCategory.paper => Icons.article,
-      TrashCategory.plastic => Icons.delete_outline,
-      TrashCategory.rest => Icons.delete,
-    };
-  }
-
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<GarbageDisposalCubit, GarbageDisposalState>(
-      builder: (context, state) {
-        if (state is GarbageDisposalLoaded) {
-          final entries = state.trashSchedule.take(7).toList();
-          final dateFormat = DateFormat('dd.MM.yyyy');
+    return KioskContainer(
+      child: BlocBuilder<GarbageDisposalCubit, GarbageDisposalState>(
+        builder: (context, state) {
+          if (state is! GarbageDisposalLoaded) {
+            return SizedBox.expand();
+          }
 
           return Column(
-            children: [
-              Text(
-                "Avfallskalender",
-                style: Theme.of(context).textTheme.headlineSmall,
-              ),
-              ...entries.map(
-                (entry) => ListTile(
-                  leading: Icon(_getCategoryIcon(entry.type)),
-                  title: Text(_getCategoryName(entry.type)),
-                  trailing: Text(dateFormat.format(entry.date)),
-                ),
-              ),
-            ],
+            mainAxisAlignment: MainAxisAlignment.center,
+            spacing: 24,
+            children: state.trashSchedule.take(5).map((entry) {
+              return Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: entry.icons
+                            .map(
+                              (i) => ClipRRect(
+                                borderRadius: BorderRadiusGeometry.circular(16),
+                                child: Image(image: i, width: 80),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            formatRelativeDay(entry.date),
+                            style: TextStyle(
+                              fontWeight: FontWeight.w500,
+                              fontSize: 24,
+                            ),
+                            textAlign: TextAlign.end,
+                          ),
+                          Text(
+                            entry.label,
+                            style: TextStyle(fontSize: 18),
+                            textAlign: TextAlign.end,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              );
+            }).toList(),
           );
-        }
-
-        return const SizedBox.shrink();
-      },
+        },
+      ),
     );
+  }
+}
+
+String formatRelativeDay(DateTime date) {
+  final DateTime now = DateTime.now();
+  final DateTime today = DateTime(now.year, now.month, now.day);
+  final DateTime tomorrow = today.add(const Duration(days: 1));
+  final DateTime overmorrow = today.add(const Duration(days: 2));
+
+  final DateTime dateOnly = DateTime(date.year, date.month, date.day);
+
+  if (dateOnly == today) {
+    return "I dag";
+  } else if (dateOnly == tomorrow) {
+    return "I morgen";
+  } else if (dateOnly == overmorrow) {
+    return "Overimorgen";
+  } else {
+    // Fallback to a standard format for other dates
+    return DateFormat.MMMMd().format(date);
   }
 }

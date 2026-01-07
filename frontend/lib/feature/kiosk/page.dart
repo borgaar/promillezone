@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:promillezone/feature/collective_transport/widget/collective_transport_stop_viewer.dart';
 import 'package:promillezone/feature/daily_content/widget/daily_content_widget.dart';
+import 'package:promillezone/feature/garbage_disposal/widget/garbage_disposal.dart';
 import 'package:promillezone/feature/kiosk/constants.dart';
 import 'package:promillezone/feature/time/widget/time_widget.dart';
 import 'package:promillezone/feature/weather/widget/weather_forecast.dart';
@@ -39,7 +40,7 @@ class KioskPage extends StatelessWidget {
                     children: [
                       Expanded(flex: 3, child: WeatherForecast()),
                       Expanded(flex: 6, child: CollectiveTransportStopViewer()),
-                      Expanded(flex: 2, child: Placeholder()),
+                      Expanded(flex: 2, child: GarbageDisposal()),
                     ],
                   ),
                 ),
