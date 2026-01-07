@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:promillezone/constant.dart';
 import 'package:promillezone/firebase_options.dart';
 import 'package:promillezone/provider.dart';
@@ -12,10 +11,7 @@ import 'package:promillezone/ui/theme.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Load environment variables
-  await dotenv.load(fileName: ".env");
-
-  if (!Platform.isLinux) {
+  if (!Platform.isLinux && !Platform.isWindows && !Platform.isMacOS) {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );

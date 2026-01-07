@@ -25,7 +25,7 @@ final routerConfig = GoRouter(
     ),
   ],
   redirect: (context, state) {
-    if (Platform.isLinux) {
+    if (Platform.isLinux || Platform.isWindows || Platform.isMacOS) {
       return "/kiosk";
     }
     return null;
