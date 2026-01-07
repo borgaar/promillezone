@@ -45,7 +45,7 @@ deploy_pi:
 
 	# Replace with your Raspberry Pi's IP address and username
 	$(eval RPI_USER := mori)
-	$(eval RPI_IP := 192.168.1.192)
+	$(eval RPI_IP := 192.168.1.194)
 
 	# Create directory and copy files to Raspberry Pi
 	ssh $(RPI_USER)@$(RPI_IP) 'pkill -9 promillezone || true && rm -rf ~/dev/pi && mkdir -p ~/dev/pi'
