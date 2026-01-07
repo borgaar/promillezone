@@ -9,7 +9,7 @@ import 'package:promillezone/repository/collective_transport/repository.dart';
 import 'package:promillezone/repository/garbage_disposal/repository.dart';
 import 'package:promillezone/repository/garbage_disposal/trv.dart';
 import 'package:promillezone/repository/weather/repository.dart';
-import 'package:promillezone/repository/weather/weather_api.dart';
+import 'package:promillezone/repository/weather/yr.dart';
 
 class AppProvider extends StatelessWidget {
   const AppProvider({super.key, required this.child});
@@ -21,7 +21,7 @@ class AppProvider extends StatelessWidget {
     return MultiRepositoryProvider(
       providers: [
         RepositoryProvider<WeatherRepository>(
-          create: (_) => WeatherApiRepository(),
+          create: (_) => YrWeatherRepository(),
         ),
         RepositoryProvider<CollectiveTransportRepository>(
           create: (_) => EnturCollectiveTransportRepository(),
