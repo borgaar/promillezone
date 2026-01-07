@@ -131,11 +131,11 @@ query StopPlace(\$stopPlaceId: String!, \$whitelistedTransportModes: [TransportM
 
   Departure _mapToDeparture(Map<String, dynamic> data) {
     // Parse times
-    final aimedTime = DateTime.parse(data['aimedDepartureTime'] as String);
+    final aimedTime = DateTime.parse(data['aimedDepartureTime'] as String).toLocal();
     final expectedTime =
-        DateTime.parse(data['expectedDepartureTime'] as String);
+        DateTime.parse(data['expectedDepartureTime'] as String).toLocal();
     final arrivalTime = data['expectedArrivalTime'] != null
-        ? DateTime.parse(data['expectedArrivalTime'] as String)
+        ? DateTime.parse(data['expectedArrivalTime'] as String).toLocal()
         : null;
 
     // Calculate delay
