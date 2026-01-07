@@ -2,6 +2,8 @@
 
 pub mod prelude;
 
+pub mod chore_tasks;
+pub mod chores;
 pub mod household_invite_codes;
 pub mod households;
 pub mod profiles;
