@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:promillezone/feature/kiosk/container.dart';
 import 'package:promillezone/repository/weather/repository.dart';
 
@@ -10,8 +11,10 @@ class WeatherForecast extends StatelessWidget {
     return KioskPollingContainer<WeatherData>(
       buildSuccess: (context, value) {
         return Column(
+          spacing: 6,
           mainAxisAlignment: MainAxisAlignment.center,
           children: value.forecasts
+              .take(6)
               .map((f) => ForecastRow(forecast: f))
               .toList(),
         );
@@ -37,8 +40,7 @@ class ForecastRow extends StatelessWidget {
     if (difference.inMinutes < 30) {
       formattedTime = 'nå';
     } else {
-      final hours = difference.inHours;
-      formattedTime = '${hours}t';
+      formattedTime = DateFormat.Hm().format(time);
     }
 
     final Color temperatureColor;
@@ -59,49 +61,64 @@ class ForecastRow extends StatelessWidget {
       precipitationColor = const Color(0xFF2897FF);
     }
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Text(
-          formattedTime,
-          style: TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
-        ),
-        Image(image: forecast.icon, width: 110),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "${forecast.temperature}°",
-              style: TextStyle(
-                color: temperatureColor,
-                fontSize: 42,
-                fontWeight: FontWeight.w500,
-                height: 1,
-              ),
-            ),
-            RichText(
-              text: TextSpan(
-                children: [
-                  TextSpan(
-                    text: forecast.precipitationMm.toString(),
-                    style: TextStyle(
-                      color: precipitationColor,
-                      fontSize: 38,
-                      fontWeight: FontWeight.w500,
-                      height: 1,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 32),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(
+            formattedTime,
+            style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+          ),
+          SizedBox(
+            width: 200,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisSize: MainAxisSize.max,
+              children: [
+                Image(image: forecast.icon, width: 92),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "${forecast.temperature}°",
+                      style: TextStyle(
+                        color: temperatureColor,
+                        fontSize: 42,
+                        fontWeight: FontWeight.w500,
+                        height: 1,
+                      ),
                     ),
-                  ),
-                  TextSpan(
-                    text: "mm",
-                    style: TextStyle(color: precipitationColor, fontSize: 24),
-                  ),
-                ],
-              ),
+                    RichText(
+                      text: TextSpan(
+                        children: [
+                          TextSpan(
+                            text: forecast.precipitationMm.toString(),
+                            style: TextStyle(
+                              color: precipitationColor,
+                              fontSize: 38,
+                              fontWeight: FontWeight.w500,
+                              height: 1,
+                            ),
+                          ),
+                          TextSpan(
+                            text: "mm",
+                            style: TextStyle(
+                              color: precipitationColor,
+                              fontSize: 24,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ],
-        ),
-      ],
+          ),
+        ],
+      ),
     );
   }
 }

@@ -79,8 +79,8 @@ class _KioskPollingContainerState<T extends Object>
                 setState(() {
                   previousState = currentState;
                   currentState = (state as PollingSuccess<T>).value;
+                  _controller.forward(from: 0);
                 });
-                _controller.forward(from: 0);
               },
               builder: (context, state) {
                 return switch (state) {
@@ -93,27 +93,6 @@ class _KioskPollingContainerState<T extends Object>
                     builder: (context, _) {
                       return Stack(
                         children: [
-                          if (previousState != null)
-                            Positioned(
-                              height: constraints.maxHeight,
-                              width: constraints.maxWidth,
-                              bottom: widget.mode != TransitionMode.slide
-                                  ? 0
-                                  : constraints.maxHeight * _animation.value,
-                              child: Opacity(
-                                opacity: 1 - _animation.value,
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 24,
-                                    vertical: 12,
-                                  ),
-                                  child: widget.buildSuccess(
-                                    context,
-                                    previousState!,
-                                  ),
-                                ),
-                              ),
-                            ),
                           Positioned(
                             height: constraints.maxHeight,
                             width: constraints.maxWidth,
@@ -131,18 +110,38 @@ class _KioskPollingContainerState<T extends Object>
                               scale: previousState == null
                                   ? _animation.value
                                   : 1,
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 24,
+                                  vertical: 12,
+                                ),
+                                child: widget.buildSuccess(context, value),
+                              ),
+                            ),
+                          ),
+                          if (previousState != null)
+                            Positioned(
+                              height: constraints.maxHeight,
+                              width: constraints.maxWidth,
+                              bottom: widget.mode != TransitionMode.slide
+                                  ? 0
+                                  : constraints.maxHeight * _animation.value,
                               child: Opacity(
-                                opacity: _animation.value,
+                                opacity: widget.mode == TransitionMode.fade
+                                    ? 1 - _animation.value
+                                    : 1,
                                 child: Padding(
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 24,
                                     vertical: 12,
                                   ),
-                                  child: widget.buildSuccess(context, value),
+                                  child: widget.buildSuccess(
+                                    context,
+                                    previousState!,
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
                         ],
                       );
                     },

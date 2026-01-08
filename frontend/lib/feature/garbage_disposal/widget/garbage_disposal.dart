@@ -12,8 +12,8 @@ class GarbageDisposal extends StatelessWidget {
       buildSuccess: (context, value) {
         return Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          spacing: 24,
-          children: value.take(5).map((entry) {
+          spacing: 12,
+          children: value.take(8).map((entry) {
             return Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -23,9 +23,12 @@ class GarbageDisposal extends StatelessWidget {
                     Row(
                       children: entry.icons
                           .map(
-                            (i) => ClipRRect(
-                              borderRadius: BorderRadiusGeometry.circular(16),
-                              child: Image(image: i, width: 80),
+                            (i) => Padding(
+                              padding: const EdgeInsets.only(right: 8.0),
+                              child: ClipRRect(
+                                borderRadius: BorderRadiusGeometry.circular(16),
+                                child: Image(image: i, width: 64),
+                              ),
                             ),
                           )
                           .toList(),

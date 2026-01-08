@@ -102,21 +102,24 @@ query StopPlace(\$stopPlaceId: String!, \$whitelistedTransportModes: [TransportM
 
     // Parse transport modes
     final modesJson = data['transportMode'] as List?;
-    final modes = modesJson
+    final modes =
+        modesJson
             ?.map((m) => TransportMode.fromString(m.toString()))
             .toList() ??
         [];
 
     // Parse estimated calls (departures)
     final callsJson = data['estimatedCalls'] as List?;
-    final departures = callsJson
+    final departures =
+        callsJson
             ?.map((c) => _mapToDeparture(c as Map<String, dynamic>))
             .toList() ??
         [];
 
     // Parse situations
     final situationsJson = data['situations'] as List?;
-    final situations = situationsJson
+    final situations =
+        situationsJson
             ?.map((s) => _mapToSituation(s as Map<String, dynamic>))
             .toList() ??
         [];
@@ -131,9 +134,12 @@ query StopPlace(\$stopPlaceId: String!, \$whitelistedTransportModes: [TransportM
 
   Departure _mapToDeparture(Map<String, dynamic> data) {
     // Parse times
-    final aimedTime = DateTime.parse(data['aimedDepartureTime'] as String).toLocal();
-    final expectedTime =
-        DateTime.parse(data['expectedDepartureTime'] as String).toLocal();
+    final aimedTime = DateTime.parse(
+      data['aimedDepartureTime'] as String,
+    ).toLocal();
+    final expectedTime = DateTime.parse(
+      data['expectedDepartureTime'] as String,
+    ).toLocal();
     final arrivalTime = data['expectedArrivalTime'] != null
         ? DateTime.parse(data['expectedArrivalTime'] as String).toLocal()
         : null;
@@ -156,7 +162,8 @@ query StopPlace(\$stopPlaceId: String!, \$whitelistedTransportModes: [TransportM
 
     // Parse situations
     final situationsJson = data['situations'] as List?;
-    final situations = situationsJson
+    final situations =
+        situationsJson
             ?.map((s) => _mapToSituation(s as Map<String, dynamic>))
             .toList() ??
         [];
@@ -174,6 +181,7 @@ query StopPlace(\$stopPlaceId: String!, \$whitelistedTransportModes: [TransportM
       realtime: data['realtime'] as bool,
       delay: delay,
       situations: situations,
+      now: DateTime.now(),
     );
   }
 
@@ -204,21 +212,20 @@ query StopPlace(\$stopPlaceId: String!, \$whitelistedTransportModes: [TransportM
     final viaJson = data['via'] as List?;
     final via = viaJson?.map((v) => v.toString()).toList() ?? [];
 
-    return DestinationDisplay(
-      frontText: data['frontText'] as String,
-      via: via,
-    );
+    return DestinationDisplay(frontText: data['frontText'] as String, via: via);
   }
 
   Situation _mapToSituation(Map<String, dynamic> data) {
     final descJson = data['description'] as List?;
-    final descriptions = descJson
+    final descriptions =
+        descJson
             ?.map((d) => _mapToLocalizedText(d as Map<String, dynamic>))
             .toList() ??
         [];
 
     final summJson = data['summary'] as List?;
-    final summaries = summJson
+    final summaries =
+        summJson
             ?.map((s) => _mapToLocalizedText(s as Map<String, dynamic>))
             .toList() ??
         [];

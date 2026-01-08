@@ -28,99 +28,49 @@ final class YrWeatherRepository extends WeatherRepository {
     final properties = body['properties'] as Map<String, dynamic>;
     final timeseries = properties['timeseries'] as List<dynamic>;
 
-    final now = DateTime.now();
-    final forecasts = <Forecast>[];
-
-    // Extract forecasts for: now, +3h, +6h, +12h
-    final targetOffsets = [0, 3, 6, 12];
-
-    for (final offset in targetOffsets) {
-      final targetTime = now.add(Duration(hours: offset));
-
-      // Find the closest timeseries entry to the target time
-      final entry = _findClosestEntry(timeseries, targetTime);
-
-      if (entry != null) {
-        final forecast = _extractForecast(entry, offset);
-        if (forecast != null) {
-          forecasts.add(forecast);
-        }
-      }
-    }
+    final forecasts = timeseries
+        .expand((ts) => [?_extractForecast(ts)])
+        .where(
+          (f) =>
+              f.time.millisecondsSinceEpoch >
+              DateTime.now().millisecondsSinceEpoch,
+        )
+        .toList();
+    forecasts.sort((a, b) => a.time.compareTo(b.time));
 
     return WeatherData(forecasts: forecasts);
   }
 
-  Map<String, dynamic>? _findClosestEntry(
-    List<dynamic> timeseries,
-    DateTime targetTime,
-  ) {
-    Map<String, dynamic>? closest;
-    Duration? minDifference;
-
-    for (final item in timeseries) {
-      final entry = item as Map<String, dynamic>;
+  Forecast? _extractForecast(Map<String, dynamic> entry) {
+    try {
       final timeStr = entry['time'] as String;
-      final entryTime = DateTime.parse(timeStr);
-      final difference = entryTime.difference(targetTime).abs();
+      final time = DateTime.parse(timeStr);
+      final data = entry['data'] as Map<String, dynamic>;
 
-      if (minDifference == null || difference < minDifference) {
-        minDifference = difference;
-        closest = entry;
-      }
+      // Get instant details for temperature
+      final instant = data['instant'] as Map<String, dynamic>;
+      final details = instant['details'] as Map<String, dynamic>;
+      final temperature = (details['air_temperature'] as num).round();
 
-      // If we're getting further away, stop searching
-      if (difference > minDifference) {
-        break;
-      }
+      final symbolCode =
+          data["next_1_hours"]["summary"]['symbol_code'] as String;
+
+      final precipitation =
+          (data["next_1_hours"]?["details"]?['precipitation_amount'] as num?)
+              ?.round() ??
+          0;
+
+      final icon = _getWeatherIcon(symbolCode);
+
+      return Forecast(
+        time: time,
+        icon: icon,
+        temperature: temperature,
+        precipitationMm: precipitation,
+      );
+    } catch (e) {
+      return null;
     }
-
-    return closest;
-  }
-
-  Forecast? _extractForecast(Map<String, dynamic> entry, int hoursOffset) {
-    final timeStr = entry['time'] as String;
-    final time = DateTime.parse(timeStr);
-    final data = entry['data'] as Map<String, dynamic>;
-
-    // Get instant details for temperature
-    final instant = data['instant'] as Map<String, dynamic>;
-    final details = instant['details'] as Map<String, dynamic>;
-    final temperature = (details['air_temperature'] as num).round();
-
-    // Determine which forecast period to use based on offset
-    String? periodKey;
-    if (hoursOffset <= 1) {
-      periodKey = 'next_1_hours';
-    } else if (hoursOffset <= 6) {
-      periodKey = 'next_6_hours';
-    } else {
-      periodKey = 'next_12_hours';
-    }
-
-    // Try to get the forecast period data
-    var periodData = data[periodKey] as Map<String, dynamic>?;
-    periodData ??=
-        (data['next_1_hours'] ?? data['next_6_hours'] ?? data['next_12_hours'])
-            as Map<String, dynamic>?;
-
-    if (periodData == null) return null;
-
-    final summary = periodData['summary'] as Map<String, dynamic>;
-    final symbolCode = summary['symbol_code'] as String;
-
-    final periodDetails = periodData['details'] as Map<String, dynamic>;
-    final precipitation =
-        (periodDetails['precipitation_amount'] as num?)?.round() ?? 0;
-
-    final icon = _getWeatherIcon(symbolCode);
-
-    return Forecast(
-      time: time,
-      icon: icon,
-      temperature: temperature,
-      precipitationMm: precipitation,
-    );
   }
 
   ImageProvider _getWeatherIcon(String symbolCode) {

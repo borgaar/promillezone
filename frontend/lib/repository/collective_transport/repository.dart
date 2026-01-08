@@ -103,6 +103,7 @@ class Departure extends Equatable {
   final bool realtime;
   final Duration? delay;
   final List<Situation> situations;
+  final DateTime now;
 
   const Departure({
     required this.quay,
@@ -117,10 +118,10 @@ class Departure extends Equatable {
     required this.realtime,
     this.delay,
     required this.situations,
+    required this.now,
   });
 
   int get untilMinutes {
-    final now = DateTime.now();
     final difference = expectedDepartureTime.difference(now);
     return difference.inMinutes;
   }
