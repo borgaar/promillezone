@@ -37,7 +37,7 @@ class CollectiveTransportStopViewer extends StatelessWidget {
               ),
               // Data rows
               ...value.departures
-                  .where((d) => d.untilMinutes >= 5 && d.untilMinutes <= 20)
+                  .where((d) => d.untilMinutes >= 5)
                   .take(7)
                   .expand(
                     (departure) => [
@@ -155,12 +155,16 @@ class CollectiveTransportStopViewer extends StatelessWidget {
           textBaseline: TextBaseline.alphabetic,
           children: [
             Text(
-              minutes.toString(),
+              minutes > 59
+                  ? (minutes / 60).floor().toString()
+                  : minutes.toString(),
               style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
             ),
             SizedBox(width: 3),
             Text(
-              "min",
+              minutes > 59
+                  ? "time${(minutes / 60).floor() != 1 ? "r" : ""}"
+                  : "min",
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.normal),
             ),
           ],
