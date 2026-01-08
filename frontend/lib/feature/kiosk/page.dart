@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:promillezone/feature/collective_transport/widget/collective_transport_stop_viewer.dart';
 import 'package:promillezone/feature/dynamic_content/widget/dynamic_content_widget.dart';
@@ -19,7 +21,9 @@ class KioskPage extends StatelessWidget {
         body: AspectRatio(
           aspectRatio: 16 / 9,
           child: Padding(
-            padding: const EdgeInsets.all(kioskContainerSpacing),
+            padding: Platform.localHostname == "zone"
+                ? EdgeInsets.only(right: kioskContainerSpacing * 2)
+                : const EdgeInsets.all(kioskContainerSpacing),
             child: Column(
               spacing: kioskContainerSpacing,
               children: [
