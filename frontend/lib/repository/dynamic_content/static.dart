@@ -40,4 +40,7 @@ final class StaticDynamicContentRepository extends DynamicContentRepository {
       message: null,
     );
   }
+
+  @override
+  Duration get pollingInterval => Duration(hours: 24);
 }

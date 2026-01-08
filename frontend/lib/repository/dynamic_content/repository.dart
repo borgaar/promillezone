@@ -3,6 +3,8 @@ import 'package:flutter/widgets.dart';
 
 abstract class DynamicContentRepository {
   Future<DynamicContent> pollContent();
+
+  Duration get pollingInterval;
 }
 
 final class DynamicContent extends Equatable {

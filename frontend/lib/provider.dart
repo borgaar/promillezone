@@ -61,10 +61,14 @@ class AppProvider extends StatelessWidget {
             )..initialize(),
           ),
           BlocProvider(
-            create: (context) => PollingCubit(
-              onPoll: context.read<DynamicContentRepository>().pollContent,
-              interval: Duration(seconds: 5),
-            )..initialize(),
+            create: (context) {
+              final repo = context.read<DynamicContentRepository>();
+
+              return PollingCubit(
+                onPoll: repo.pollContent,
+                interval: repo.pollingInterval,
+              )..initialize();
+            },
           ),
         ],
         child: child,
