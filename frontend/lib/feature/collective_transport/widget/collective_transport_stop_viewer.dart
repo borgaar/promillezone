@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:promillezone/feature/collective_transport/cubit/collective_transport_cubit.dart';
 import 'package:promillezone/feature/kiosk/container.dart';
 import 'package:promillezone/repository/collective_transport/repository.dart';
 import 'package:intl/intl.dart';
@@ -10,62 +8,49 @@ class CollectiveTransportStopViewer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<CollectiveTransportCubit, CollectiveTransportState>(
-      builder: (context, state) {
-        if (state is CollectiveTransportInitial) {
-          return const Center(child: Text('Initializing...'));
-        }
-
-        if (state is CollectiveTransportLoaded) {
-          final departures = state.departures;
-
-          return KioskContainer(
-            child: SizedBox.expand(
-              child: Table(
-                columnWidths: const {
-                  0: FlexColumnWidth(1.5),
-                  1: FlexColumnWidth(6),
-                  2: FlexColumnWidth(1),
-                  3: FlexColumnWidth(2),
-                  4: FlexColumnWidth(1),
-                  5: FlexColumnWidth(1),
-                },
-                defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-                children: [
-                  // Header row
-                  TableRow(
-                    children: [
-                      _buildHeaderCell('Nr.'),
-                      _buildHeaderCell('Destinasjon', align: TextAlign.left),
-                      _buildHeaderCell('Plt.'),
-                      _buildHeaderCell('Status'),
-                      _buildHeaderCell('Tid'),
-                      _buildHeaderCell('Kl.'),
-                    ],
-                  ),
-                  // Data rows
-                  ...departures
-                      .where((d) => d.untilMinutes >= 5 && d.untilMinutes <= 20)
-                      .take(7)
-                      .expand(
-                        (departure) => [
-                          _buildDepartureRow(departure),
-                          TableRow(
-                            children: List.generate(
-                              6,
-                              (index) => SizedBox(height: 12),
-                            ),
-                          ),
-                        ],
-                      ),
-                ],
-              ),
+    return KioskPollingContainer<StopPlace>(
+      buildSuccess: (context, value) {
+        return Table(
+          columnWidths: const {
+            0: FlexColumnWidth(1.5),
+            1: FlexColumnWidth(6),
+            2: FlexColumnWidth(1),
+            3: FlexColumnWidth(2),
+            4: FlexColumnWidth(1),
+            5: FlexColumnWidth(1),
+          },
+          defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+          children: [
+            // Header row
+            TableRow(
+              children: [
+                _buildHeaderCell('Nr.'),
+                _buildHeaderCell('Destinasjon', align: TextAlign.left),
+                _buildHeaderCell('Plt.'),
+                _buildHeaderCell('Status'),
+                _buildHeaderCell('Tid'),
+                _buildHeaderCell('Kl.'),
+              ],
             ),
-          );
-        }
-
-        return const Center(child: Text('Unknown state'));
+            // Data rows
+            ...value.departures
+                .where((d) => d.untilMinutes >= 5 && d.untilMinutes <= 20)
+                .take(7)
+                .expand(
+                  (departure) => [
+                    _buildDepartureRow(departure),
+                    TableRow(
+                      children: List.generate(
+                        6,
+                        (index) => SizedBox(height: 12),
+                      ),
+                    ),
+                  ],
+                ),
+          ],
+        );
       },
+      mode: TransitionMode.fade,
     );
   }
 

@@ -1,67 +1,61 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
-import 'package:promillezone/feature/garbage_disposal/cubit/garbage_disposal_cubit.dart';
 import 'package:promillezone/feature/kiosk/container.dart';
+import 'package:promillezone/repository/garbage_disposal/repository.dart';
 
 class GarbageDisposal extends StatelessWidget {
   const GarbageDisposal({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return KioskContainer(
-      child: BlocBuilder<GarbageDisposalCubit, GarbageDisposalState>(
-        builder: (context, state) {
-          if (state is! GarbageDisposalLoaded) {
-            return SizedBox.expand();
-          }
-
-          return Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            spacing: 24,
-            children: state.trashSchedule.take(5).map((entry) {
-              return Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: entry.icons
-                            .map(
-                              (i) => ClipRRect(
-                                borderRadius: BorderRadiusGeometry.circular(16),
-                                child: Image(image: i, width: 80),
-                              ),
-                            )
-                            .toList(),
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            formatRelativeDay(entry.date),
-                            style: TextStyle(
-                              fontWeight: FontWeight.w500,
-                              fontSize: 24,
+    return KioskPollingContainer<List<TrashScheduleEntry>>(
+      buildSuccess: (context, value) {
+        return Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          spacing: 24,
+          children: value.take(5).map((entry) {
+            return Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: entry.icons
+                          .map(
+                            (i) => ClipRRect(
+                              borderRadius: BorderRadiusGeometry.circular(16),
+                              child: Image(image: i, width: 80),
                             ),
-                            textAlign: TextAlign.end,
+                          )
+                          .toList(),
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          formatRelativeDay(entry.date),
+                          style: TextStyle(
+                            fontWeight: FontWeight.w500,
+                            fontSize: 24,
                           ),
-                          Text(
-                            entry.label,
-                            style: TextStyle(fontSize: 18),
-                            textAlign: TextAlign.end,
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ],
-              );
-            }).toList(),
-          );
-        },
-      ),
+                          textAlign: TextAlign.end,
+                        ),
+                        Text(
+                          entry.label,
+                          style: TextStyle(fontSize: 18),
+                          textAlign: TextAlign.end,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            );
+          }).toList(),
+        );
+      },
+      mode: TransitionMode.slide,
     );
   }
 }

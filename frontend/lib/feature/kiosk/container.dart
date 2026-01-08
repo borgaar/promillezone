@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:promillezone/feature/kiosk/constants.dart';
+import 'package:promillezone/state/cubit/polling_cubit.dart';
 
 class KioskContainer extends StatelessWidget {
   const KioskContainer({super.key, required this.child});
@@ -13,8 +15,142 @@ class KioskContainer extends StatelessWidget {
         color: kioskBackgroundColor,
         borderRadius: BorderRadius.circular(kioskBorderRadius),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      clipBehavior: Clip.antiAlias,
       child: child,
+    );
+  }
+}
+
+enum TransitionMode { slide, fade }
+
+class KioskPollingContainer<T extends Object> extends StatefulWidget {
+  const KioskPollingContainer({
+    super.key,
+    required this.buildSuccess,
+    required this.mode,
+  });
+
+  final Widget Function(BuildContext context, T value) buildSuccess;
+  final TransitionMode mode;
+
+  @override
+  State<KioskPollingContainer<T>> createState() =>
+      _KioskPollingContainerState();
+}
+
+class _KioskPollingContainerState<T extends Object>
+    extends State<KioskPollingContainer<T>>
+    with SingleTickerProviderStateMixin {
+  T? previousState;
+  T? currentState;
+
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    _controller = AnimationController(
+      vsync: this,
+      duration: Duration(seconds: 1),
+    );
+    _animation = CurvedAnimation(
+      parent: _controller,
+      curve: widget.mode == TransitionMode.fade
+          ? Curves.linear
+          : Curves.easeInOutCubic,
+    );
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return KioskContainer(
+      child: LayoutBuilder(
+        builder: (context, constraints) =>
+            BlocConsumer<PollingCubit<T>, PollingState<T>>(
+              listenWhen: (previous, current) => current is PollingSuccess<T>,
+              listener: (context, state) {
+                setState(() {
+                  previousState = currentState;
+                  currentState = (state as PollingSuccess<T>).value;
+                });
+                _controller.forward(from: 0);
+              },
+              builder: (context, state) {
+                return switch (state) {
+                  PollingInitial<T>() => SizedBox.expand(),
+                  PollingFailure<T>(:final message) => Center(
+                    child: Text(message, style: TextStyle(color: Colors.red)),
+                  ),
+                  PollingSuccess<T>(:final value) => AnimatedBuilder(
+                    animation: _animation,
+                    builder: (context, _) {
+                      return Stack(
+                        children: [
+                          if (previousState != null)
+                            Positioned(
+                              height: constraints.maxHeight,
+                              width: constraints.maxWidth,
+                              bottom: widget.mode != TransitionMode.slide
+                                  ? 0
+                                  : constraints.maxHeight * _animation.value,
+                              child: Opacity(
+                                opacity: 1 - _animation.value,
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 24,
+                                    vertical: 12,
+                                  ),
+                                  child: widget.buildSuccess(
+                                    context,
+                                    previousState!,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          Positioned(
+                            height: constraints.maxHeight,
+                            width: constraints.maxWidth,
+                            bottom: () {
+                              if (previousState == null ||
+                                  widget.mode != TransitionMode.slide) {
+                                return 0.0;
+                              }
+
+                              return constraints.maxHeight *
+                                  (_animation.value - 1);
+                            }(),
+
+                            child: Transform.scale(
+                              scale: previousState == null
+                                  ? _animation.value
+                                  : 1,
+                              child: Opacity(
+                                opacity: _animation.value,
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 24,
+                                    vertical: 12,
+                                  ),
+                                  child: widget.buildSuccess(context, value),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                };
+              },
+            ),
+      ),
     );
   }
 }

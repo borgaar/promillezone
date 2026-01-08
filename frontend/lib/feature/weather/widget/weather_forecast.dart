@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:promillezone/feature/kiosk/container.dart';
-import 'package:promillezone/feature/weather/cubit/weather_cubit.dart';
 import 'package:promillezone/repository/weather/repository.dart';
 
 class WeatherForecast extends StatelessWidget {
@@ -9,23 +7,16 @@ class WeatherForecast extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<WeatherCubit, WeatherState>(
-      builder: (context, state) {
-        if (state is! WeatherLoaded) {
-          return const SizedBox.shrink();
-        }
-
-        final weatherData = state.weatherData;
-
-        return KioskContainer(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: weatherData.forecasts
-                .map((f) => ForecastRow(forecast: f))
-                .toList(),
-          ),
+    return KioskPollingContainer<WeatherData>(
+      buildSuccess: (context, value) {
+        return Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: value.forecasts
+              .map((f) => ForecastRow(forecast: f))
+              .toList(),
         );
       },
+      mode: TransitionMode.slide,
     );
   }
 }
