@@ -51,13 +51,13 @@ class _KioskPollingContainerState<T extends Object>
   void initState() {
     _controller = AnimationController(
       vsync: this,
-      duration: Duration(seconds: 1),
+      duration: Duration(
+        milliseconds: widget.mode == TransitionMode.fade ? 500 : 1000,
+      ),
     );
     _animation = CurvedAnimation(
       parent: _controller,
-      curve: widget.mode == TransitionMode.fade
-          ? Curves.linear
-          : Curves.easeInOutCubic,
+      curve: Curves.easeInOutCubic,
     );
     super.initState();
   }

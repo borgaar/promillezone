@@ -1,6 +1,9 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:promillezone/feature/kiosk/constants.dart';
 import 'package:promillezone/feature/kiosk/container.dart';
+import 'package:promillezone/ui/animated_flip_counter.dart';
 
 class TimeWidget extends StatelessWidget {
   const TimeWidget({super.key});
@@ -15,7 +18,7 @@ class TimeWidget extends StatelessWidget {
         ),
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
-            return const SizedBox.shrink();
+            return const SizedBox.expand();
           }
 
           final dateText = switch (snapshot.data!.weekday) {
@@ -48,40 +51,142 @@ class TimeWidget extends StatelessWidget {
           return Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(
-                '${snapshot.data!.hour.toString().padLeft(2, '0')}:${snapshot.data!.minute.toString().padLeft(2, '0')}:${snapshot.data!.second.toString().padLeft(2, '0')}',
-                style: const TextStyle(
-                  color: kioskTextColor,
-                  fontSize: 94,
-                  fontWeight: FontWeight.w300,
-                  fontFamily: "JetbrainsMono",
-                  height: 1.2,
+              CountingTime(current: snapshot.data!),
+              Transform.translate(
+                offset: const Offset(0, -10),
+                child: Text(
+                  dateText,
+                  style: const TextStyle(
+                    fontSize: 72,
+                    fontFamily: "Inter",
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.05,
+                    height: 1.3,
+                  ),
                 ),
               ),
-              Text(
-                dateText,
-                style: const TextStyle(
-                  fontSize: 85,
-                  fontFamily: "Inter",
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.05,
-                  height: 1,
-                ),
-              ),
-              Text(
-                '${snapshot.data!.day.toString()}. $monthText',
-                style: const TextStyle(
-                  color: kioskTextColor,
-                  fontSize: 64,
-                  fontWeight: FontWeight.w500,
-                  fontFamily: "Inter",
-                  letterSpacing: 0.64,
-                ),
+
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.max,
+                spacing: 12,
+                children: [
+                  Transform.rotate(
+                    filterQuality: FilterQuality.high,
+                    angle: -0.10,
+                    child: SizedBox(
+                      width: 120,
+                      height: 120,
+                      child: Stack(
+                        children: [
+                          Image.asset(
+                            "asset/img/months/day.png",
+                            width: 120,
+                            fit: BoxFit.contain,
+                          ),
+                          Align(
+                            alignment: Alignment.bottomCenter,
+                            child: SizedBox(
+                              height: 75,
+                              child: Text(
+                                snapshot.data!.day.toString(),
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 70,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: "ComicNeue",
+                                  height: 0.8,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Image.asset(
+                        "asset/img/months/${DateFormat.MMMM("en").format(snapshot.data!).toLowerCase()}.png",
+                        width: 380,
+                        fit: BoxFit.contain,
+                      ),
+                      SizedBox(
+                        width: 270,
+                        height: 80,
+                        child: Text(
+                          monthText,
+                          maxLines: 1,
+                          softWrap: false,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                            fontFamily: "ComicNeue",
+                            fontSize: 50,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ],
           );
         },
       ),
+    );
+  }
+}
+
+final _tStyle = const TextStyle(
+  color: kioskTextColor,
+  fontSize: 94,
+  fontWeight: FontWeight.w300,
+  fontFamily: "JetbrainsMono",
+  height: 1.2,
+);
+final _curve = Curves.easeInOutCubic;
+final _duration = Duration(milliseconds: 200);
+
+class CountingTime extends StatelessWidget {
+  const CountingTime({super.key, required this.current});
+
+  final DateTime current;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        AnimatedFlipCounter(
+          value: current.hour,
+          textStyle: _tStyle,
+          curve: _curve,
+          duration: _duration,
+          hideLeadingZeroes: false,
+          wholeDigits: 2,
+        ),
+        Text(":", style: _tStyle),
+        AnimatedFlipCounter(
+          value: current.minute,
+          textStyle: _tStyle,
+          curve: _curve,
+          duration: _duration,
+          hideLeadingZeroes: false,
+          wholeDigits: 2,
+        ),
+        Text(":", style: _tStyle),
+        AnimatedFlipCounter(
+          value: current.second,
+          textStyle: _tStyle,
+          curve: _curve,
+          duration: _duration,
+          hideLeadingZeroes: false,
+          wholeDigits: 2,
+        ),
+      ],
     );
   }
 }

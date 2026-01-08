@@ -21,8 +21,9 @@ class KioskPage extends StatelessWidget {
         body: AspectRatio(
           aspectRatio: 16 / 9,
           child: Padding(
+            // Our TV is a bit fucked, shifting everything to the right
             padding: Platform.localHostname == "zone"
-                ? EdgeInsets.only(right: kioskContainerSpacing * 2)
+                ? EdgeInsets.only(right: kioskContainerSpacing * 3)
                 : const EdgeInsets.all(kioskContainerSpacing),
             child: Column(
               spacing: kioskContainerSpacing,
