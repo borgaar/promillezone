@@ -6,6 +6,18 @@ import 'package:promillezone/repository/weather/repository.dart';
 class WeatherForecast extends StatelessWidget {
   const WeatherForecast({super.key});
 
+  String _getLabelForIndex(int index) {
+    return switch (index) {
+      0 => 'nå',
+      1 => '6t',
+      2 => '12t',
+      3 => 'i morgen',
+      4 => 'overimorgen',
+      5 => '3 dager',
+      _ => '',
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     return KioskPollingContainer<WeatherData>(
@@ -14,8 +26,13 @@ class WeatherForecast extends StatelessWidget {
           spacing: 6,
           mainAxisAlignment: MainAxisAlignment.center,
           children: value.forecasts
+              .asMap()
+              .entries
               .take(6)
-              .map((f) => ForecastRow(forecast: f))
+              .map((entry) => ForecastRow(
+                    forecast: entry.value,
+                    label: _getLabelForIndex(entry.key),
+                  ))
               .toList(),
         );
       },
@@ -25,23 +42,24 @@ class WeatherForecast extends StatelessWidget {
 }
 
 class ForecastRow extends StatelessWidget {
-  const ForecastRow({super.key, required this.forecast});
+  const ForecastRow({super.key, required this.forecast, this.label});
 
   final Forecast forecast;
+  final String? label;
 
   @override
   Widget build(BuildContext context) {
-    final time = forecast.time;
-
-    final now = DateTime.now();
-    final difference = time.difference(now);
-    final String formattedTime;
-
-    if (difference.inMinutes < 30) {
-      formattedTime = 'nå';
-    } else {
-      formattedTime = DateFormat.Hm().format(time);
-    }
+    final String formattedTime = label ??
+        (() {
+          final time = forecast.time;
+          final now = DateTime.now();
+          final difference = time.difference(now);
+          if (difference.inMinutes < 30) {
+            return 'nå';
+          } else {
+            return DateFormat.Hm().format(time);
+          }
+        })();
 
     final Color temperatureColor;
     if (forecast.temperature >= 20) {

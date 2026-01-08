@@ -25,6 +25,7 @@ dependencies:
   flutter_layout_grid: ^2.0.8
   cron: ^0.6.2
   auto_size_text: ^3.0.0
+  qr_flutter: ^4.1.0
 
 dev_dependencies:
   flutter_test:

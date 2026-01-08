@@ -13,49 +13,57 @@ class GarbageDisposal extends StatelessWidget {
         return Column(
           mainAxisAlignment: MainAxisAlignment.center,
           spacing: 12,
-          children: value.take(8).map((entry) {
-            return Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: value
+              .fold(<TrashCategory, TrashScheduleEntry>{}, (
+                previousValue,
+                element,
+              ) {
+                if (!previousValue.containsKey(element.type)) {
+                  previousValue[element.type] = element;
+                }
+                return previousValue;
+              })
+              .values
+              .take(8)
+              .map((entry) {
+                return Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Row(
-                      children: entry.icons
-                          .map(
-                            (i) => Padding(
-                              padding: const EdgeInsets.only(right: 8.0),
-                              child: ClipRRect(
-                                borderRadius: BorderRadiusGeometry.circular(16),
-                                child: Image(image: i, width: 64),
-                              ),
-                            ),
-                          )
-                          .toList(),
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          formatRelativeDay(entry.date),
-                          style: TextStyle(
-                            fontWeight: FontWeight.w500,
-                            fontSize: 24,
+                        ClipRRect(
+                          borderRadius: BorderRadiusGeometry.circular(16),
+                          child: Row(
+                            children: entry.icons
+                                .map((i) => Image(image: i, width: 64))
+                                .toList(),
                           ),
-                          textAlign: TextAlign.end,
                         ),
-                        Text(
-                          entry.label,
-                          style: TextStyle(fontSize: 18),
-                          textAlign: TextAlign.end,
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              formatRelativeDay(entry.date),
+                              style: TextStyle(
+                                fontWeight: FontWeight.w500,
+                                fontSize: 24,
+                              ),
+                              textAlign: TextAlign.end,
+                            ),
+                            Text(
+                              entry.label,
+                              style: TextStyle(fontSize: 18),
+                              textAlign: TextAlign.end,
+                            ),
+                          ],
                         ),
                       ],
                     ),
                   ],
-                ),
-              ],
-            );
-          }).toList(),
+                );
+              })
+              .toList(),
         );
       },
       mode: TransitionMode.slide,
