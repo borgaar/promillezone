@@ -1,3 +1,4 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:promillezone/feature/kiosk/constants.dart';
 import 'package:promillezone/feature/kiosk/container.dart';
@@ -34,7 +35,7 @@ class DailyContentWidget extends StatelessWidget {
                         child: Center(
                           child: Padding(
                             padding: const EdgeInsets.all(16.0),
-                            child: Text(
+                            child: AutoSizeText(
                               text,
                               style: TextStyle(
                                 color: kioskTextColor,
@@ -43,6 +44,7 @@ class DailyContentWidget extends StatelessWidget {
                                 fontFamily: fontFamily,
                               ),
                               textAlign: TextAlign.center,
+                              maxLines: 6,
                             ),
                           ),
                         ),
@@ -59,7 +61,7 @@ class DailyContentWidget extends StatelessWidget {
                         borderRadius: BorderRadiusGeometry.circular(
                           kioskBorderRadius / 2,
                         ),
-                        child: Image(image: image, fit: BoxFit.fill),
+                        child: Image(image: image, fit: BoxFit.contain),
                       ),
                     ),
                   ],
