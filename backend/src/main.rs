@@ -66,6 +66,7 @@ async fn main() {
             UriPaths::JOIN_HOUSEHOLD,
             post(handlers::household::join_household),
         )
+        .route(UriPaths::WISDOM, get(handlers::fun::get_wisdom))
         .route_layer(axum::middleware::from_fn_with_state(
             state.clone(),
             middleware::firebase_auth::authenticate,

@@ -15,4 +15,7 @@ impl UriPaths {
     // API Docs
     pub const SCALAR: &str = "/scalar";
     pub const OPENAPI_JSON: &str = "/openapi.json";
+
+    // FUN
+    pub const WISDOM: &str = "/wisdom";
 }
