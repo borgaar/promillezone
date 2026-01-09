@@ -6,14 +6,13 @@ import 'package:promillezone/repository/weather/repository.dart';
 class WeatherForecast extends StatelessWidget {
   const WeatherForecast({super.key});
 
-  String _getLabelForIndex(int index) {
+  String _getLabelForIndex(int index, Forecast forecast) {
     return switch (index) {
       0 => 'nå',
       1 => '6t',
       2 => '12t',
       3 => 'i morgen',
-      4 => 'overimorgen',
-      5 => '3 dager',
+      4 || 5 => DateFormat.EEEE('nb_NO').format(forecast.time).toLowerCase(),
       _ => '',
     };
   }
@@ -31,7 +30,7 @@ class WeatherForecast extends StatelessWidget {
               .take(6)
               .map((entry) => ForecastRow(
                     forecast: entry.value,
-                    label: _getLabelForIndex(entry.key),
+                    label: _getLabelForIndex(entry.key, entry.value),
                   ))
               .toList(),
         );
