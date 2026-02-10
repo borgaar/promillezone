@@ -41,6 +41,7 @@ build_pi:
 	@echo "Copy the entire build/pi/ directory to your Raspberry Pi and run ./promillezone"
 
 deploy_pi:
+	make build_pi
 	@echo "Deploying to Raspberry Pi..."
 
 	# Replace with your Raspberry Pi's IP address and username

@@ -7,3 +7,8 @@ const kioskTextColor = Color(0xFFE0E0E0);
 const kioskContainerSpacing = 16.0;
 
 const kioskBorderRadius = 32.0;
+
+const kioskContainerPadding = EdgeInsets.symmetric(
+  horizontal: 24,
+  vertical: 12,
+);

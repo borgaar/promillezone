@@ -2,11 +2,9 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:promillezone/feature/collective_transport/widget/collective_transport_stop_viewer.dart';
-import 'package:promillezone/feature/countdown/widget/countdown.dart';
 import 'package:promillezone/feature/dynamic_content/widget/dynamic_content_widget.dart';
 import 'package:promillezone/feature/garbage_disposal/widget/garbage_disposal.dart';
 import 'package:promillezone/feature/kiosk/constants.dart';
-import 'package:promillezone/feature/kiosk/container.dart';
 import 'package:promillezone/feature/time/widget/time_widget.dart';
 import 'package:promillezone/feature/weather/widget/weather_forecast.dart';
 import 'package:promillezone/feature/wifi/widget/wifi_qr_code.dart';

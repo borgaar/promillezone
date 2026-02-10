@@ -16,32 +16,39 @@ class PollingCubit<T extends Object> extends Cubit<PollingState<T>> {
   PollingCubit({required this.onPoll, required this.interval})
     : super(PollingInitial<T>());
 
+  static const _recoveryInterval = Duration(seconds: 5);
+
   final Future<T> Function() onPoll;
   final Duration interval;
 
-  // ignore: unused_field
-  late final Timer _timer;
+  Timer? _timer;
+  bool _isRecovering = false;
 
   Future<void> _poll() async {
     try {
       final data = await onPoll();
-
+      _isRecovering = false;
       emit(PollingSuccess<T>(value: data));
     } catch (e) {
+      _isRecovering = true;
       emit(PollingFailure<T>(message: e.toString()));
     }
+    _scheduleNextPoll();
+  }
+
+  void _scheduleNextPoll() {
+    _timer?.cancel();
+    final nextInterval = _isRecovering ? _recoveryInterval : interval;
+    _timer = Timer(nextInterval, _poll);
   }
 
   Future<void> initialize() async {
     _poll();
-
-    // Start periodic updates every 5 seconds
-    _timer = Timer.periodic(interval, (_) => _poll());
   }
 
   @override
   Future<void> close() {
-    _timer.cancel();
+    _timer?.cancel();
     return super.close();
   }
 }

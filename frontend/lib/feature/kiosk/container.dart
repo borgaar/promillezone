@@ -28,10 +28,12 @@ class KioskPollingContainer<T extends Object> extends StatefulWidget {
     super.key,
     required this.buildSuccess,
     required this.mode,
+    this.omitPadding = false,
   });
 
   final Widget Function(BuildContext context, T value) buildSuccess;
   final TransitionMode mode;
+  final bool omitPadding;
 
   @override
   State<KioskPollingContainer<T>> createState() =>
@@ -111,10 +113,9 @@ class _KioskPollingContainerState<T extends Object>
                                   ? _animation.value
                                   : 1,
                               child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 24,
-                                  vertical: 12,
-                                ),
+                                padding: widget.omitPadding
+                                    ? EdgeInsets.zero
+                                    : kioskContainerPadding,
                                 child: widget.buildSuccess(context, value),
                               ),
                             ),
@@ -131,10 +132,9 @@ class _KioskPollingContainerState<T extends Object>
                                     ? 1 - _animation.value
                                     : 1,
                                 child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 24,
-                                    vertical: 12,
-                                  ),
+                                  padding: widget.omitPadding
+                                      ? EdgeInsets.zero
+                                      : kioskContainerPadding,
                                   child: widget.buildSuccess(
                                     context,
                                     previousState!,
