@@ -3,6 +3,8 @@ import 'package:flutter/widgets.dart';
 import 'package:promillezone/repository/weather/repository.dart';
 
 final class YrWeatherRepository extends WeatherRepository {
+  final Dio _dio = Dio();
+
   @override
   Future<WeatherData> getForecast({
     required double latitude,
@@ -14,7 +16,7 @@ final class YrWeatherRepository extends WeatherRepository {
       {"lat": latitude.toString(), "lon": longitude.toString()},
     );
 
-    final response = await Dio().getUri(
+    final response = await _dio.getUri(
       uri,
       options: Options(
         headers: {

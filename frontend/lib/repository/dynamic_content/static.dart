@@ -3,23 +3,25 @@ import 'package:flutter/widgets.dart';
 import 'package:promillezone/repository/dynamic_content/repository.dart';
 
 final class StaticDynamicContentRepository extends DynamicContentRepository {
+  final Dio _dio = Dio();
+
   @override
   Future<DynamicContent> pollContent() async {
-    final catImageResponse = await Dio().get(
+    final catImageResponse = await _dio.get(
       "https://cataas.com/cat?width=300&height=300",
       options: Options(responseType: ResponseType.bytes),
     );
 
     final image = MemoryImage(catImageResponse.data);
 
-    final jokeResponse = await Dio().get(
+    final jokeResponse = await _dio.get(
       "https://icanhazdadjoke.com/",
       options: Options(headers: {"Accept": "application/json"}),
     );
 
     final joke = jokeResponse.data["joke"] as String;
 
-    final quoteResponse = await Dio().get("https://api.kanye.rest/");
+    final quoteResponse = await _dio.get("https://api.kanye.rest/");
 
     final quote = quoteResponse.data["quote"] as String;
 

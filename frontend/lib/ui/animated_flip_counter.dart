@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/widgets.dart';
 
-class AnimatedFlipCounter extends StatelessWidget {
+class AnimatedFlipCounter extends StatefulWidget {
   /// The value of this counter.
   ///
   /// When a new value is specified, the counter will automatically animate
@@ -108,19 +108,56 @@ class AnimatedFlipCounter extends StatelessWidget {
        assert(wholeDigits >= 0, 'wholeDigits must be non-negative');
 
   @override
-  Widget build(BuildContext context) {
-    // Merge the text style with the default style, and request tabular figures
-    // for consistent width of digits (if supported by the font).
+  State<AnimatedFlipCounter> createState() => _AnimatedFlipCounterState();
+}
+
+class _AnimatedFlipCounterState extends State<AnimatedFlipCounter> {
+  TextPainter? _textPainter;
+  Size _digitSize = Size.zero;
+
+  void _updateTextPainter() {
+    _textPainter?.dispose();
+
     final style = DefaultTextStyle.of(context).style
-        .merge(textStyle)
+        .merge(widget.textStyle)
         .merge(const TextStyle(fontFeatures: [FontFeature.tabularFigures()]));
 
-    // Layout number "0" (probably the widest digit) to see its size
-    final prototypeDigit = TextPainter(
+    _textPainter = TextPainter(
       text: TextSpan(text: '0', style: style),
       textDirection: TextDirection.ltr,
       textScaler: MediaQuery.textScalerOf(context),
     )..layout();
+
+    _digitSize = _textPainter!.size;
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _updateTextPainter();
+  }
+
+  @override
+  void didUpdateWidget(AnimatedFlipCounter oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.textStyle != widget.textStyle) {
+      _updateTextPainter();
+    }
+  }
+
+  @override
+  void dispose() {
+    _textPainter?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Merge the text style with the default style, and request tabular figures
+    // for consistent width of digits (if supported by the font).
+    final style = DefaultTextStyle.of(context).style
+        .merge(widget.textStyle)
+        .merge(const TextStyle(fontFeatures: [FontFeature.tabularFigures()]));
 
     // Find the text color (or red as warning). This is so we can avoid using
     // `Opacity` and `AnimatedOpacity` widget, for better performance.
@@ -128,7 +165,8 @@ class AnimatedFlipCounter extends StatelessWidget {
 
     // Convert the decimal value to int. For example, if we want 2 decimal
     // places, we will convert 5.21 into 521.
-    final int value = (this.value * math.pow(10, fractionDigits)).round();
+    final int value =
+        (widget.value * math.pow(10, widget.fractionDigits)).round();
 
     // Split the integer value into separate digits.
     // For example, to draw 123, we split it into [1, 12, 123].
@@ -143,36 +181,36 @@ class AnimatedFlipCounter extends StatelessWidget {
       digits.add(v);
       v = v ~/ 10;
     }
-    while (digits.length < wholeDigits + fractionDigits) {
+    while (digits.length < widget.wholeDigits + widget.fractionDigits) {
       digits.add(0); // padding leading zeroes
     }
     digits = digits.reversed.toList(growable: false);
 
     // Generate the widgets needed for digits before the decimal point.
     final integerWidgets = <Widget>[];
-    for (int i = 0; i < digits.length - fractionDigits; i++) {
+    for (int i = 0; i < digits.length - widget.fractionDigits; i++) {
       final digit = _SingleDigitFlipCounter(
         key: ValueKey(digits.length - i),
         value: digits[i].toDouble(),
-        duration: duration,
-        curve: curve,
-        size: prototypeDigit.size,
+        duration: widget.duration,
+        curve: widget.curve,
+        size: _digitSize,
         color: color,
-        padding: padding,
+        padding: widget.padding,
         // We might want to hide leading zeroes. The way we split digits, only
         // leading zeroes have "true zero" value. E.g. five hundred, 0500 is
         // split into [0, 5, 50, 500]. Since 50 and 500 are not 0, they are
         // always visible. But we should not show 0.48 as .48 so the last
         // zero before decimal point is always visible.
-        visible: hideLeadingZeroes
-            ? digits[i] != 0 || i == digits.length - fractionDigits - 1
+        visible: widget.hideLeadingZeroes
+            ? digits[i] != 0 || i == digits.length - widget.fractionDigits - 1
             : true,
       );
       integerWidgets.add(digit);
     }
 
     // Insert "thousand separator" widgets if needed.
-    if (thousandSeparator != null) {
+    if (widget.thousandSeparator != null) {
       // Find the first digit that's NOT a HIDDEN leading zero.
       // For example, "000123", if users want to hide leading zeroes, then
       // the first visible digit is the "1", at index 3.
@@ -181,7 +219,7 @@ class AnimatedFlipCounter extends StatelessWidget {
       // This is so we know when to stop inserting separators. We don't want
       // something like ",,,123,456" if leading zeroes are hidden.
       int firstVisibleDigitIndex = 0;
-      if (hideLeadingZeroes) {
+      if (widget.hideLeadingZeroes) {
         // Find the first digit that's not zero.
         firstVisibleDigitIndex = digits.indexWhere((d) => d != 0);
         // If all digits are zero, then the first visible digit is the last one.
@@ -195,7 +233,7 @@ class AnimatedFlipCounter extends StatelessWidget {
       int counter = 0;
       for (int i = integerWidgets.length; i > firstVisibleDigitIndex; i--) {
         if (counter > 0 && counter % 3 == 0) {
-          integerWidgets.insert(i, Text(thousandSeparator!));
+          integerWidgets.insert(i, Text(widget.thousandSeparator!));
         }
         counter++;
       }
@@ -205,16 +243,16 @@ class AnimatedFlipCounter extends StatelessWidget {
       style: style,
       child: Row(
         mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: mainAxisAlignment,
+        mainAxisAlignment: widget.mainAxisAlignment,
         // Even in RTL languages, numbers should always be displayed LTR.
         textDirection: TextDirection.ltr,
         children: [
-          if (prefix != null) Text(prefix!),
+          if (widget.prefix != null) Text(widget.prefix!),
           // Draw the negative sign (-), if exists
           ClipRect(
             child: TweenAnimationBuilder(
               // Animate the negative sign (-) appearing and disappearing
-              duration: negativeSignDuration,
+              duration: widget.negativeSignDuration,
               tween: Tween(end: value < 0 ? 1.0 : 0.0),
               builder: (_, double v, _) => Center(
                 widthFactor: v,
@@ -222,23 +260,25 @@ class AnimatedFlipCounter extends StatelessWidget {
               ),
             ),
           ),
-          if (infix != null) Text(infix!),
+          if (widget.infix != null) Text(widget.infix!),
           // Draw digits before the decimal point
           ...integerWidgets,
           // Draw the decimal point
-          if (fractionDigits != 0) Text(decimalSeparator),
+          if (widget.fractionDigits != 0) Text(widget.decimalSeparator),
           // Draw digits after the decimal point
-          for (int i = digits.length - fractionDigits; i < digits.length; i++)
+          for (int i = digits.length - widget.fractionDigits;
+              i < digits.length;
+              i++)
             _SingleDigitFlipCounter(
               key: ValueKey('decimal$i'),
               value: digits[i].toDouble(),
-              duration: duration,
-              curve: curve,
-              size: prototypeDigit.size,
+              duration: widget.duration,
+              curve: widget.curve,
+              size: _digitSize,
               color: color,
-              padding: padding,
+              padding: widget.padding,
             ),
-          if (suffix != null) Text(suffix!),
+          if (widget.suffix != null) Text(widget.suffix!),
         ],
       ),
     );
