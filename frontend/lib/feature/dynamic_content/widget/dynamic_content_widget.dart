@@ -71,7 +71,6 @@ class DailyContentWidget extends StatelessWidget {
           }).toList(),
         );
       },
-      mode: TransitionMode.slide,
     );
   }
 }

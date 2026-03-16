@@ -40,7 +40,6 @@ class GarbageDisposal extends StatelessWidget {
           ],
         );
       },
-      mode: TransitionMode.slide,
     );
   }
 }

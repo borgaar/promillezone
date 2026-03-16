@@ -35,7 +35,6 @@ class WeatherForecast extends StatelessWidget {
               .toList(),
         );
       },
-      mode: TransitionMode.slide,
     );
   }
 }

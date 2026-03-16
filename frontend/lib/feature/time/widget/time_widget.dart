@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:promillezone/feature/kiosk/constants.dart';
 import 'package:promillezone/feature/kiosk/container.dart';
-import 'package:promillezone/ui/animated_flip_counter.dart';
 
 class TimeWidget extends StatelessWidget {
   const TimeWidget({super.key});
@@ -146,8 +145,6 @@ final _tStyle = const TextStyle(
   fontFamily: "JetbrainsMono",
   height: 1.2,
 );
-final _curve = Curves.easeInOutCubic;
-final _duration = Duration(milliseconds: 200);
 
 class CountingTime extends StatelessWidget {
   const CountingTime({super.key, required this.current});
@@ -159,32 +156,11 @@ class CountingTime extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        AnimatedFlipCounter(
-          value: current.hour,
-          textStyle: _tStyle,
-          curve: _curve,
-          duration: _duration,
-          hideLeadingZeroes: false,
-          wholeDigits: 2,
-        ),
+        Text(current.hour.toString().padLeft(2, '0'), style: _tStyle),
         Text(":", style: _tStyle),
-        AnimatedFlipCounter(
-          value: current.minute,
-          textStyle: _tStyle,
-          curve: _curve,
-          duration: _duration,
-          hideLeadingZeroes: false,
-          wholeDigits: 2,
-        ),
+        Text(current.minute.toString().padLeft(2, '0'), style: _tStyle),
         Text(":", style: _tStyle),
-        AnimatedFlipCounter(
-          value: current.second,
-          textStyle: _tStyle,
-          curve: _curve,
-          duration: _duration,
-          hideLeadingZeroes: false,
-          wholeDigits: 2,
-        ),
+        Text(current.second.toString().padLeft(2, '0'), style: _tStyle),
       ],
     );
   }

@@ -54,7 +54,6 @@ class CollectiveTransportStopViewer extends StatelessWidget {
           ),
         );
       },
-      mode: TransitionMode.fade,
     );
   }
 

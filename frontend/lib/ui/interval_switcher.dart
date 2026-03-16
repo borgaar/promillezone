@@ -19,10 +19,7 @@ class IntervalSwitcher<T extends Object> extends StatefulWidget {
 }
 
 class _IntervalSwitcherState<T extends Object>
-    extends State<IntervalSwitcher<T>>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _animation;
+    extends State<IntervalSwitcher<T>> {
   // ignore: unused_field Just saved as a variable
   late Timer _timer;
   late int _currentIndex;
@@ -34,20 +31,11 @@ class _IntervalSwitcherState<T extends Object>
       "initialIndex must be within the range of children",
     );
 
-    _controller = AnimationController(
-      vsync: this,
-      duration: Duration(milliseconds: 1000),
-    );
-    _animation = CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeInOutCubic,
-    );
     _currentIndex = widget.initialIndex;
     _timer = Timer.periodic(widget.interval, (timer) {
       if (widget.children.length < 2) return;
       setState(() {
         _currentIndex = (_currentIndex + 1) % widget.children.length;
-        _controller.forward(from: 0);
       });
     });
     super.initState();
@@ -55,39 +43,12 @@ class _IntervalSwitcherState<T extends Object>
 
   @override
   void dispose() {
-    _controller.dispose();
     _timer.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) => AnimatedBuilder(
-        animation: _animation,
-        builder: (context, _) {
-          return Stack(
-            children: [
-              Positioned(
-                height: constraints.maxHeight,
-                width: constraints.maxWidth,
-                bottom: constraints.maxHeight * (_animation.value - 1),
-                child: widget.children[_currentIndex],
-              ),
-              Positioned(
-                height: constraints.maxHeight,
-                width: constraints.maxWidth,
-                bottom: constraints.maxHeight * _animation.value,
-                child:
-                    widget.children[(_currentIndex -
-                            1 +
-                            widget.children.length) %
-                        widget.children.length],
-              ),
-            ],
-          );
-        },
-      ),
-    );
+    return widget.children[_currentIndex];
   }
 }
