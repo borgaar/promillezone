@@ -17,5 +17,5 @@ impl UriPaths {
     pub const OPENAPI_JSON: &str = "/openapi.json";
 
     // FUN
-    pub const WISDOM: &str = "/wisdom";
+    pub const CONTENT: &str = "/content";
 }

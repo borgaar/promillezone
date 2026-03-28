@@ -1,8 +1,9 @@
 mod entity;
 mod handlers;
-mod lib;
 mod middleware;
 mod model;
+mod repository;
+mod utils;
 
 use axum::{
     Router,
@@ -15,8 +16,10 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use utoipa::OpenApi;
 use utoipa_scalar::{Scalar, Servable};
 
-use crate::lib::openapi::ApiDoc;
-use crate::{lib::uri_paths::UriPaths, middleware::firebase_auth::FirebaseAuth};
+use crate::{
+    middleware::firebase_auth::FirebaseAuth,
+    utils::{openapi::ApiDoc, uri_paths::UriPaths},
+};
 
 #[derive(Clone)]
 pub struct AppState {
@@ -66,7 +69,7 @@ async fn main() {
             UriPaths::JOIN_HOUSEHOLD,
             post(handlers::household::join_household),
         )
-        .route(UriPaths::WISDOM, get(handlers::fun::get_wisdom))
+        .route(UriPaths::CONTENT, get(handlers::content::get_content))
         .route_layer(axum::middleware::from_fn_with_state(
             state.clone(),
             middleware::firebase_auth::authenticate,

@@ -6,6 +6,7 @@ pub struct ApiTags;
 impl ApiTags {
     pub const HOUSEHOLD: &str = "Household";
     pub const PROFILE: &str = "Profile";
+    pub const CONTENT: &str = "Content";
 }
 
 #[derive(OpenApi)]
@@ -26,6 +27,7 @@ impl ApiTags {
         handlers::household::join_household,
         handlers::household::leave_household,
         handlers::household::get_household,
+        handlers::content::get_content,
     ),
     modifiers(&SecurityAddon),
     security(
@@ -33,7 +35,8 @@ impl ApiTags {
     ),
     tags(
         (name = ApiTags::PROFILE, description = "Endpoints for managing the user's profile."),
-        (name = ApiTags::HOUSEHOLD, description = "Endpoints for managing the user's assigned household.")
+        (name = ApiTags::HOUSEHOLD, description = "Endpoints for managing the user's assigned household."),
+        (name = ApiTags::CONTENT, description = "Endpoints for retrieving daily content.")
     )
 )]
 pub struct ApiDoc;

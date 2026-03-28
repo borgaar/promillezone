@@ -164,12 +164,13 @@ static WISDOM: &[&str] = &[
     "For anyone whose tried to text or call me in the past 2 weeks, I got rid of that phone so I could focus on these albums",
 ];
 
-pub fn get_random_wisdom() -> String {
-    let seconds = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap()
-        .as_secs();
+pub fn get_random_wisdom() -> Result<String, String> {
+    let Ok(epoch) = SystemTime::now().duration_since(UNIX_EPOCH) else {
+        return Err("Failed to get system time".to_string());
+    };
+
+    let seconds = epoch.as_secs();
 
     let idx = (seconds as usize) % WISDOM.len();
-    WISDOM[idx].to_string()
+    Ok(WISDOM[idx].to_string())
 }

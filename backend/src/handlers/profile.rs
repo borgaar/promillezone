@@ -4,7 +4,7 @@ use validator::Validate;
 
 use crate::entity::prelude::*;
 use crate::entity::profiles;
-use crate::lib::openapi::ApiTags;
+use crate::utils::openapi::ApiTags;
 use crate::model::dto::error::*;
 use crate::model::dto::{self};
 use crate::{AppState, middleware::firebase_auth::Claims};
